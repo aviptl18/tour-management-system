@@ -1,0 +1,133 @@
+﻿@using System.Text.Json
+@using Tour_Module.DTOs.Tours.View
+@model CreateTourStep2ViewDto
+
+@{
+    ViewData["Title"] = "Add New Tour";
+    ViewData["Subtitle"] = "Step 2 of 3 — Select Location & Images";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/forms.css" />
+}
+
+<div class="admin-wrapper">
+
+    <!-- HEADER -->
+    <div class="admin-page-header">
+        <h2 class="admin-title">@ViewData["Title"]</h2>
+        <p class="admin-subtitle">@ViewData["Subtitle"]</p>
+    </div>
+
+    <!-- STEPPER -->
+    <div class="tour-stepper">
+        <div class="step">
+            <div class="step-circle">1</div>
+            <div class="step-label">Basic Info</div>
+        </div>
+
+        <div class="step-line"></div>
+
+        <div class="step active">
+            <div class="step-circle">2</div>
+            <div class="step-label">Media</div>
+        </div>
+
+        <div class="step-line"></div>
+
+        <div class="step">
+            <div class="step-circle">3</div>
+            <div class="step-label">Pricing</div>
+        </div>
+    </div>
+
+    <!-- FORM -->
+    <form asp-action="CreateStep2" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        <!-- 🔥 REQUIRED FOR DRAFT FLOW -->
+        <input type="hidden" asp-for="DraftId" />
+
+        <!-- LOCATION -->
+        <div class="mb-3">
+            <label class="form-label">Select Location <span class="text-danger">*</span></label>
+            <select id="locationDropdown"
+                    asp-for="LocationId"
+                    asp-items="Model.Locations"
+                    class="form-control">
+                <option value="">-- Select Location --</option>
+            </select>
+            <span asp-validation-for="LocationId" class="text-danger"></span>
+        </div>
+
+        <!-- IMAGE UPLOAD -->
+        <div class="mb-3">
+            <label class="form-label">Upload Images</label>
+            <input id="uploadInput" type="file" multiple class="form-control" />
+        </div>
+
+        <hr />
+
+        <!-- IMAGE GALLERY -->
+        <div id="gallery"></div>
+
+        <!-- HIDDEN INPUTS -->
+        <div id="hiddenInputs"></div>
+
+        <!-- CLIENT-SIDE ERRORS -->
+        <div id="imageError" class="text-danger mt-2 d-none">
+            Select at least one image.
+        </div>
+
+        <div id="coverError" class="text-danger mt-2 d-none">
+            Select cover image.
+        </div>
+
+        <!-- SERVER ERRORS -->
+        @if (ViewData.ModelState.ContainsKey("SelectedImageIds"))
+        {
+            <div class="text-danger mt-2">
+                @ViewData.ModelState["SelectedImageIds"]?.Errors.First().ErrorMessage
+            </div>
+        }
+
+        @if (ViewData.ModelState.ContainsKey("CoverImageId"))
+        {
+            <div class="text-danger mt-2">
+                @ViewData.ModelState["CoverImageId"]?.Errors.First().ErrorMessage
+            </div>
+        }
+
+        <!-- NAVIGATION -->
+        <div class="mt-4 d-flex justify-content-between">
+
+            <!-- 🔥 Preserve draft when going back -->
+            <a asp-action="CreateStep1"
+               asp-route-draftId="@Model.DraftId"
+               class="btn btn-secondary">
+                ← Back
+            </a>
+
+            <button id="nextBtn" type="submit" class="btn btn-primary">
+                Next Step →
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <!-- Restore server state -->
+    <script>
+        window.preSelected = @Html.Raw(
+                    JsonSerializer.Serialize(Model.SelectedImageIds ?? new List<int>())
+            );
+
+    window.preCoverNum = @Html.Raw(
+                JsonSerializer.Serialize(Model.CoverImageId)
+        );
+</script>
+
+    <script src="~/js/admin/create-step2.js"></script>
+}

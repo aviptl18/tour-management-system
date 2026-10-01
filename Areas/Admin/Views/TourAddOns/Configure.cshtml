@@ -1,0 +1,234 @@
+﻿@model Tour_Module.ViewModels.Admin.Tours.TourAddOnConfigVM
+
+@{
+    ViewData["Title"] = "Configure Add-Ons";
+}
+
+@Html.AntiForgeryToken()
+
+<h2 class="mb-4">Configure Add-Ons for Tour</h2>
+
+<!-- ================= INCLUDED OPTIONS ================= -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header fw-bold bg-light">
+        Included Options (Locked)
+    </div>
+    <div class="card-body">
+
+        @if (!Model.IncludedOptions.Any())
+        {
+            <div class="text-muted">
+                No included options found.
+            </div>
+        }
+        else
+        {
+            @foreach (var option in Model.IncludedOptions)
+            {
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded bg-light">
+                    <div>
+                        <span class="fw-semibold">@option.OptionName</span>
+                        <span class="badge bg-success ms-2">Included</span>
+                        <div class="small text-muted">
+                            @option.Category
+                        </div>
+                    </div>
+
+                    <div class="fw-semibold">
+                        @option.BasePrice @option.Currency
+                    </div>
+                </div>
+            }
+        }
+
+    </div>
+</div>
+
+<!-- ================= OPTIONAL OPTIONS ================= -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header fw-bold bg-light">
+        Optional Add-Ons
+    </div>
+
+    <div class="card-body" id="optionalContainer">
+
+        @if (!Model.OptionalOptions.Any())
+        {
+            <div class="text-muted">
+                No optional add-ons added yet.
+            </div>
+        }
+        else
+        {
+            @foreach (var option in Model.OptionalOptions)
+            {
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                    <div>
+                        <span class="fw-semibold">@option.OptionName</span>
+                        <div class="small text-muted">
+                            @option.Category
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="fw-semibold">
+                            @option.BasePrice @option.Currency
+                        </span>
+
+                        <button class="btn btn-sm btn-outline-danger"
+                                onclick="removeOptional(@option.OptionId)">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+
+    </div>
+</div>
+
+<!-- ================= ADD OPTIONAL BUTTON ================= -->
+<div class="mb-4">
+    <button class="btn btn-primary"
+            onclick="loadAvailableOptions()">
+        + Add Optional Add-On
+    </button>
+</div>
+
+<!-- ================= AVAILABLE OPTIONS MODAL ================= -->
+<div class="modal fade" id="availableOptionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Select Optional Add-On</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="availableOptionsContainer">
+                    <div class="text-muted">Loading options...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<a asp-area="Admin"
+   asp-controller="Tours"
+   asp-action="Index"
+   class="btn btn-secondary mt-3">
+    ← Back to Tours
+</a>
+
+@section Scripts {
+
+    <script>
+
+        const tourId = @Model.TourId;
+
+        function getAntiForgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]').value;
+        }
+
+        // ================= LOAD AVAILABLE OPTIONS =================
+        function loadAvailableOptions() {
+
+            fetch(`/Admin/TourAddOns/GetAvailableOptionalOptions?tourId=${tourId}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    let html = "";
+
+                    if (data.length === 0) {
+                        html = `<div class="text-muted">No more available add-ons.</div>`;
+                    } else {
+
+                        data.forEach(option => {
+
+                            html += `
+                                <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                                    <div>
+                                        <span class="fw-semibold">${option.optionName}</span>
+                                        <div class="small text-muted">
+                                            ${option.category}
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="fw-semibold">
+                                            ${option.basePrice} ${option.currency}
+                                        </span>
+
+                                        <button class="btn btn-sm btn-primary"
+                                                onclick="addOptional(${option.optionId})">
+                                            Add
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    document.getElementById("availableOptionsContainer").innerHTML = html;
+
+                    const modal = new bootstrap.Modal(
+                        document.getElementById('availableOptionsModal')
+                    );
+
+                    modal.show();
+                });
+        }
+
+        // ================= ADD OPTIONAL =================
+        function addOptional(optionId) {
+
+            fetch(`/Admin/TourAddOns/AddOptionalAddOn`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({
+                    tourId: tourId,
+                    optionId: optionId
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error("Add failed:", response.status);
+                }
+                return response;
+            })
+            .then(() => location.reload());
+        }
+
+        // ================= REMOVE OPTIONAL =================
+        function removeOptional(optionId) {
+
+            fetch(`/Admin/TourAddOns/RemoveOptionalAddOn`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({
+                    tourId: tourId,
+                    optionId: optionId
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error("Remove failed:", response.status);
+                }
+                return response;
+            })
+            .then(() => location.reload());
+        }
+
+    </script>
+
+}

@@ -1,0 +1,44 @@
+﻿@model Tour_Module.ViewModels.AddOns.AddOnCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Create Add-On";
+}
+
+<h2>Create Add-On</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="OptionName" class="form-label"></label>
+        <input asp-for="OptionName" class="form-control" />
+        <span asp-validation-for="OptionName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="BasePrice" class="form-label"></label>
+        <input asp-for="BasePrice" class="form-control" />
+        <span asp-validation-for="BasePrice" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Currency" class="form-label"></label>
+        <input asp-for="Currency" class="form-control" />
+        <span asp-validation-for="Currency" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Category" class="form-label"></label>
+        <input asp-for="Category" class="form-control" />
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

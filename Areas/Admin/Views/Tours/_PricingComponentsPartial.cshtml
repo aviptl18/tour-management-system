@@ -1,0 +1,40 @@
+﻿@model List<Tour_Module.Models.Entities.TourDraftPricingComponent>
+
+@{
+    var options = Model.Where(x => !x.IsBaseComponent);
+    var total = Model.Sum(x => x.Price);
+}
+
+@if (options.Any())
+{
+    <div class="mb-3">
+
+        @foreach (var opt in options)
+        {
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                <div>@opt.ComponentName</div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <span>₹ @opt.Price</span>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger remove-option"
+                            data-id="@opt.PricingComponentId"
+                            data-draft="@opt.DraftId">
+                        −
+                    </button>
+                </div>
+            </div>
+        }
+
+    </div>
+}
+
+<div id="optionSelectorContainer"></div>
+
+<hr />
+
+<div class="text-end fw-bold">
+    Total: ₹ @total
+</div>

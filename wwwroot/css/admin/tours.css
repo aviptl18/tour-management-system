@@ -1,0 +1,60 @@
+﻿/* PAGE HEADER */
+/*.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}*/
+
+/* GRID */
+/*.admin-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}*/
+
+/* CARD */
+/*.admin-card {
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+    transition: 0.2s ease;
+}
+
+    .admin-card:hover {
+        transform: translateY(-4px);
+    }*/
+
+    /* IMAGE */
+    /*.admin-card img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }*/
+
+/* BODY */
+/*.admin-card-body {
+    padding: 16px;
+}
+
+    .admin-card-body h5 {
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .admin-card-body .muted {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .admin-card-body .price {
+        font-weight: 700;
+        color: #198754;
+        margin: 10px 0;
+    }
+
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+}*/

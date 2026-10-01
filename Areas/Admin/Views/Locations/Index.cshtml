@@ -1,0 +1,100 @@
+﻿@model List<Tour_Module.Models.Entities.Location>
+
+@{
+    ViewData["Title"] = "Locations";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Locations</h4>
+        <a asp-action="Create" class="btn btn-primary">Add Location</a>
+    </div>
+
+    <!-- ================= SEARCH INPUT ================= -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text"
+                   id="locationSearch"
+                   class="form-control"
+                   placeholder="Type to search locations..." />
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th style="width:150px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="locationTable">
+            @foreach (var loc in Model)
+            {
+                <tr data-name="@loc.LocationName.ToLower()">
+                    <td>@loc.LocationName</td>
+                    <td>
+                        @if (loc.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td>@loc.CreatedDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <a asp-action="Edit"
+                           asp-route-id="@loc.LocationId"
+                           class="btn btn-sm btn-outline-primary">
+                            Edit
+                        </a>
+
+                        @if (loc.IsActive)
+                        {
+                            <form asp-action="Deactivate"
+                                  asp-route-id="@loc.LocationId"
+                                  method="post"
+                                  class="d-inline">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Deactivate this location?');">
+                                    Deactivate
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>
+
+<!-- ================= LIVE SEARCH SCRIPT ================= -->
+<script>
+    const searchInput = document.getElementById("locationSearch");
+    const rows = document.querySelectorAll("#locationTable tr");
+
+    searchInput.addEventListener("keyup", function () {
+        const searchText = this.value.toLowerCase();
+
+        rows.forEach(row => {
+            const name = row.dataset.name;
+            row.style.display = name.includes(searchText) ? "" : "none";
+        });
+    });
+</script>

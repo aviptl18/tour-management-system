@@ -1,0 +1,41 @@
+﻿@model Tour_Module.DTOs.Tours.UpdateTourDto
+
+<h2 class="mt-3 mb-4">Edit Tour</h2>
+
+<form method="post">
+
+    <input type="hidden" asp-for="TourId" />
+
+    <div class="mb-3">
+        <label>Location ID</label>
+        <input asp-for="LocationId" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Tour Title</label>
+        <input asp-for="TourTitle" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Duration</label>
+        <input asp-for="Duration" class="form-control" />
+    </div>
+
+    @* <div class="mb-3">
+        <label>Price</label>
+        <input asp-for="Price" class="form-control" />
+    </div> *@
+
+    <div class="mb-3">
+        <label>Overview</label>
+        <textarea asp-for="Overview" class="form-control"></textarea>
+    </div>
+
+    @* <div class="mb-3">
+        <label>Image URL</label>
+        <input asp-for="ImageUrl" class="form-control" />
+    </div> *@
+
+    <button class="btn btn-success">Update</button>
+    <a href="/Tours/Index" class="btn btn-secondary">Cancel</a>
+</form>

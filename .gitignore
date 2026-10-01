@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio local files
+.vs/
+*.user
+*.suo
+
+# Local configuration
+appsettings.json
+appsettings.Development.json
+
+# Prevent future accidental database backup uploads
+*.bak
+*.mdf
+*.ldf
+*.sqlite
+
+repomix-output.xml
+Documentation
