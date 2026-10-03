@@ -1,4 +1,4 @@
-﻿@model Tour_Module.ViewModels.Admin.Tours.TourAddOnConfigVM
+﻿@model Tour_Module.ViewModels.Admin.Tours.TourAddOnConfigurationViewModel
 
 @{
     ViewData["Title"] = "Configure Add-Ons";
@@ -13,6 +13,7 @@
     <div class="card-header fw-bold bg-light">
         Included Options (Locked)
     </div>
+
     <div class="card-body">
 
         @if (!Model.IncludedOptions.Any())
@@ -28,7 +29,11 @@
                 <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded bg-light">
                     <div>
                         <span class="fw-semibold">@option.OptionName</span>
-                        <span class="badge bg-success ms-2">Included</span>
+
+                        <span class="badge bg-success ms-2">
+                            Included
+                        </span>
+
                         <div class="small text-muted">
                             @option.Category
                         </div>
@@ -44,15 +49,16 @@
     </div>
 </div>
 
-<!-- ================= OPTIONAL OPTIONS ================= -->
+
+<!-- ================= OPTIONAL ADD-ONS ================= -->
 <div class="card mb-4 shadow-sm">
     <div class="card-header fw-bold bg-light">
         Optional Add-Ons
     </div>
 
-    <div class="card-body" id="optionalContainer">
+    <div class="card-body" id="optionalAddOnsContainer">
 
-        @if (!Model.OptionalOptions.Any())
+        @if (!Model.OptionalAddOns.Any())
         {
             <div class="text-muted">
                 No optional add-ons added yet.
@@ -60,23 +66,27 @@
         }
         else
         {
-            @foreach (var option in Model.OptionalOptions)
+            @foreach (var addOn in Model.OptionalAddOns)
             {
                 <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
                     <div>
-                        <span class="fw-semibold">@option.OptionName</span>
+                        <span class="fw-semibold">
+                            @addOn.OptionName
+                        </span>
+
                         <div class="small text-muted">
-                            @option.Category
+                            @addOn.Category
                         </div>
                     </div>
 
                     <div class="d-flex align-items-center gap-3">
                         <span class="fw-semibold">
-                            @option.BasePrice @option.Currency
+                            @addOn.BasePrice @addOn.Currency
                         </span>
 
-                        <button class="btn btn-sm btn-outline-danger"
-                                onclick="removeOptional(@option.OptionId)">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="removeOptionalAddOn(@addOn.OptionId)">
                             Remove
                         </button>
                     </div>
@@ -87,29 +97,44 @@
     </div>
 </div>
 
-<!-- ================= ADD OPTIONAL BUTTON ================= -->
+
+<!-- ================= ADD OPTIONAL ADD-ON BUTTON ================= -->
 <div class="mb-4">
-    <button class="btn btn-primary"
-            onclick="loadAvailableOptions()">
+    <button type="button"
+            class="btn btn-primary"
+            onclick="loadAvailableAddOns()">
         + Add Optional Add-On
     </button>
 </div>
 
-<!-- ================= AVAILABLE OPTIONS MODAL ================= -->
-<div class="modal fade" id="availableOptionsModal" tabindex="-1">
+
+<!-- ================= AVAILABLE ADD-ONS MODAL ================= -->
+<div class="modal fade"
+     id="availableAddOnsModal"
+     tabindex="-1"
+     aria-labelledby="availableAddOnsModalLabel"
+     aria-hidden="true">
+
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">Select Optional Add-On</h5>
+                <h5 class="modal-title" id="availableAddOnsModalLabel">
+                    Select Optional Add-On
+                </h5>
+
                 <button type="button"
                         class="btn-close"
-                        data-bs-dismiss="modal"></button>
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
             </div>
 
             <div class="modal-body">
-                <div id="availableOptionsContainer">
-                    <div class="text-muted">Loading options...</div>
+                <div id="availableAddOnsContainer">
+                    <div class="text-muted">
+                        Loading available add-ons...
+                    </div>
                 </div>
             </div>
 
@@ -117,6 +142,8 @@
     </div>
 </div>
 
+
+<!-- ================= BACK BUTTON ================= -->
 <a asp-area="Admin"
    asp-controller="Tours"
    asp-action="Index"
@@ -124,111 +151,198 @@
     ← Back to Tours
 </a>
 
-@section Scripts {
 
+@section Scripts
+{
     <script>
 
         const tourId = @Model.TourId;
 
+
+        // ================= ANTI-FORGERY TOKEN =================
+
         function getAntiForgeryToken() {
-            return document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            return document
+                .querySelector('input[name="__RequestVerificationToken"]')
+                .value;
         }
 
-        // ================= LOAD AVAILABLE OPTIONS =================
-        function loadAvailableOptions() {
 
-            fetch(`/Admin/TourAddOns/GetAvailableOptionalOptions?tourId=${tourId}`)
-                .then(res => res.json())
-                .then(data => {
+        // ================= LOAD AVAILABLE ADD-ONS =================
+
+        function loadAvailableAddOns() {
+
+            fetch(`/Admin/TourAddOns/GetAvailableAddOns?tourId=${tourId}`)
+                .then(response => {
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Failed to load available add-ons. Status: ${response.status}`
+                        );
+                    }
+
+                    return response.json();
+                })
+                .then(addOns => {
 
                     let html = "";
 
-                    if (data.length === 0) {
-                        html = `<div class="text-muted">No more available add-ons.</div>`;
-                    } else {
+                    if (addOns.length === 0) {
 
-                        data.forEach(option => {
+                        html = `
+                            <div class="text-muted">
+                                No more available add-ons.
+                            </div>
+                        `;
+                    }
+                    else {
+
+                        addOns.forEach(addOn => {
 
                             html += `
                                 <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+
                                     <div>
-                                        <span class="fw-semibold">${option.optionName}</span>
+                                        <span class="fw-semibold">
+                                            ${addOn.optionName}
+                                        </span>
+
                                         <div class="small text-muted">
-                                            ${option.category}
+                                            ${addOn.category}
                                         </div>
                                     </div>
 
                                     <div class="d-flex align-items-center gap-3">
+
                                         <span class="fw-semibold">
-                                            ${option.basePrice} ${option.currency}
+                                            ${addOn.basePrice} ${addOn.currency}
                                         </span>
 
-                                        <button class="btn btn-sm btn-primary"
-                                                onclick="addOptional(${option.optionId})">
+                                        <button type="button"
+                                                class="btn btn-sm btn-primary"
+                                                onclick="addOptionalAddOn(${addOn.optionId})">
                                             Add
                                         </button>
+
                                     </div>
+
                                 </div>
                             `;
                         });
                     }
 
-                    document.getElementById("availableOptionsContainer").innerHTML = html;
+                    document.getElementById(
+                        "availableAddOnsContainer"
+                    ).innerHTML = html;
+
 
                     const modal = new bootstrap.Modal(
-                        document.getElementById('availableOptionsModal')
+                        document.getElementById("availableAddOnsModal")
                     );
 
                     modal.show();
+                })
+                .catch(error => {
+
+                    console.error(
+                        "Failed to load available add-ons:",
+                        error
+                    );
+
+                    document.getElementById(
+                        "availableAddOnsContainer"
+                    ).innerHTML = `
+                        <div class="text-danger">
+                            Failed to load available add-ons.
+                        </div>
+                    `;
                 });
         }
 
-        // ================= ADD OPTIONAL =================
-        function addOptional(optionId) {
+
+        // ================= ADD OPTIONAL ADD-ON =================
+
+        function addOptionalAddOn(optionId) {
 
             fetch(`/Admin/TourAddOns/AddOptionalAddOn`, {
-                method: 'POST',
+                method: "POST",
+
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': getAntiForgeryToken()
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": getAntiForgeryToken()
                 },
+
                 body: JSON.stringify({
                     tourId: tourId,
                     optionId: optionId
                 })
             })
             .then(response => {
+
                 if (!response.ok) {
-                    console.error("Add failed:", response.status);
+
+                    throw new Error(
+                        `Failed to add Add-On. Status: ${response.status}`
+                    );
                 }
+
                 return response;
             })
-            .then(() => location.reload());
+            .then(() => {
+
+                location.reload();
+            })
+            .catch(error => {
+
+                console.error(
+                    "Failed to add Add-On:",
+                    error
+                );
+            });
         }
 
-        // ================= REMOVE OPTIONAL =================
-        function removeOptional(optionId) {
+
+        // ================= REMOVE OPTIONAL ADD-ON =================
+
+        function removeOptionalAddOn(optionId) {
 
             fetch(`/Admin/TourAddOns/RemoveOptionalAddOn`, {
-                method: 'POST',
+                method: "POST",
+
                 headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': getAntiForgeryToken()
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": getAntiForgeryToken()
                 },
+
                 body: JSON.stringify({
                     tourId: tourId,
                     optionId: optionId
                 })
             })
             .then(response => {
+
                 if (!response.ok) {
-                    console.error("Remove failed:", response.status);
+
+                    throw new Error(
+                        `Failed to remove Add-On. Status: ${response.status}`
+                    );
                 }
+
                 return response;
             })
-            .then(() => location.reload());
+            .then(() => {
+
+                location.reload();
+            })
+            .catch(error => {
+
+                console.error(
+                    "Failed to remove Add-On:",
+                    error
+                );
+            });
         }
 
     </script>
-
 }

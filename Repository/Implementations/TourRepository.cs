@@ -81,13 +81,13 @@ namespace Tour_Module.Repository.Implementations
             ).AsNoTracking().ToListAsync();
 
             // 3️⃣ Allowed Add-ons
-            var addOns = await (
-                from tao in _context.TourAllowedOptions
-                join od in _context.OptionDefinitions
-                    on tao.OptionId equals od.OptionId
-                where tao.TourId == tourId
-                select od.OptionName
-            ).AsNoTracking().ToListAsync();
+            //var addOns = await (
+            //    from tao in _context.TourAllowedOptions
+            //    join od in _context.OptionDefinitions
+            //        on tao.OptionId equals od.OptionId
+            //    where tao.TourId == tourId
+            //    select od.OptionName
+            //).AsNoTracking().ToListAsync();
 
             // 4️⃣ Map to ViewModel
             return new AdminTourDetailVM
@@ -108,7 +108,7 @@ namespace Tour_Module.Repository.Implementations
                     .Select(x => x.ImageUrl)
                     .ToList(),
 
-                AddOns = addOns
+                //AddOns = addOns
             };
         }
 

@@ -2,11 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Tour_Module.Models.Entities;
 using Tour_Module.Services.Interfaces;
+using Tour_Module.ViewModels.Location;
 
 namespace Tour_Module.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles ="Admin")]
+    [Authorize(Roles = "Admin")]
     public class LocationsController : Controller
     {
         private readonly ILocationService _locationService;
@@ -20,7 +21,7 @@ namespace Tour_Module.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var locations = await _locationService.GetAllLocationsForAdminAsync();
+            var locations = await _locationService.GetAllAsync();
             return View(locations);
         }
 
@@ -33,18 +34,24 @@ namespace Tour_Module.Areas.Admin.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(string locationName)
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Create(CreateLocationViewModel model)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
             try
             {
-                await _locationService.CreateLocationAsync(locationName);
+                await _locationService.CreateAsync(model.LocationName);
+
                 TempData["Success"] = "Location created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ModelState.AddModelError("", ex.Message);
-                return View();
+                return View(model);
             }
         }
 
@@ -53,26 +60,41 @@ namespace Tour_Module.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var location = await _locationService.GetLocationByIdAsync(id);
-            return View(location);
+            var location = await _locationService.GetByIdAsync(id);
+
+            if (location == null)
+                return NotFound();
+
+            var model = new EditLocationViewModel
+            {
+                LocationId = location.LocationId,
+                LocationName = location.LocationName
+            };
+
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(Location model)
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Edit(EditLocationViewModel model)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
             try
             {
-                await _locationService.UpdateLocationAsync(
+                await _locationService.UpdateAsync(
                     model.LocationId,
-                    model.LocationName,
-                    true
+                    model.LocationName
                 );
+
                 TempData["Success"] = "Location updated successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                ModelState.AddModelError("",ex.Message);
+                ModelState.AddModelError("", ex.Message);
                 return View(model);
             }
         }
@@ -80,14 +102,16 @@ namespace Tour_Module.Areas.Admin.Controllers
         // Deactivate
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Deactivate(int id)
         {
             try
             {
-                await _locationService.DeactivateLocationAsync(id);
+                await _locationService.DeactivateAsync(id);
                 TempData["Success"] = "Location deactivated.";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
             }
@@ -95,12 +119,31 @@ namespace Tour_Module.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Seach Location ( tour creation step 2 ) 
+        // Activate
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Activate(int id)
+        {
+            try
+            {
+                await _locationService.ActivateAsync(id);
+                TempData["Success"] = "Location activated.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Search Location (tour creation step 2)
 
         [HttpGet]
-        public async Task<IActionResult> Search (string term)
+        public async Task<IActionResult> Search(string term)
         {
-            var locations = await _locationService.SearchLocationsAsync(term);
+            var locations = await _locationService.SearchAsync(term);
 
             var result = locations.Select(l => new
             {

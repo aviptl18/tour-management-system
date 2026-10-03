@@ -1,28 +1,26 @@
 ﻿using Tour_Module.Models.Entities;
 using Tour_Module.Repository.Interfaces;
 using Tour_Module.Services.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Tour_Module.Services.Implementations
 {
     public class LocationImageService : ILocationImageService
     {
-        private readonly ILocationImageRepository _locationImageRepository;
-        public LocationImageService(ILocationImageRepository locationImageRepository)
+        private readonly ILocationImageRepository _repository;
+
+        public LocationImageService(ILocationImageRepository repository)
         {
-            _locationImageRepository = locationImageRepository;
+            _repository = repository;
         }
 
-        public async Task<List<LocationImage>> GetImagesByLocationIdAsync(int locationId)
+        public async Task<List<LocationImage>> GetByLocationIdAsync(int locationId)
         {
-            return await _locationImageRepository.GetImagesByLocationIdAsync(locationId);
+            return await _repository.GetByLocationIdAsync(locationId);
         }
 
-        public async Task AddLocationImageAsync(LocationImage locationImage)
+        public async Task AddAsync(LocationImage locationImage)
         {
-            await _locationImageRepository.AddLocationImageAsync(locationImage);
+            await _repository.AddAsync(locationImage);
         }
-
     }
 }

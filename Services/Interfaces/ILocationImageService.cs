@@ -6,7 +6,8 @@ namespace Tour_Module.Services.Interfaces
 {
     public interface ILocationImageService
     {
-        Task<List<LocationImage>> GetImagesByLocationIdAsync(int locationId);
-        Task AddLocationImageAsync(LocationImage locationImage);
+        Task<List<LocationImage>> GetByLocationIdAsync(int locationId);
+
+        Task AddAsync(LocationImage locationImage);
     }
 }

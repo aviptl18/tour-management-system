@@ -3,7 +3,6 @@ using Tour_Module.Repository.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Tour_Module.Repository.Implementations
 {
@@ -27,103 +26,131 @@ namespace Tour_Module.Repository.Implementations
             var list = new List<Location>();
 
             using var con = GetConnection();
-            using var cmd = new SqlCommand("usp_GetAllLocations", con);
+            using var cmd = new SqlCommand("dbo.usp_Location_GetAll", con);
+
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@IncludeInactive", includeInactive);
+
+            cmd.Parameters.Add("@IncludeInactive", SqlDbType.Bit)
+                          .Value = includeInactive;
 
             await con.OpenAsync();
+
             using var reader = await cmd.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
             {
                 list.Add(new Location
                 {
-                    LocationId = (int)reader["LocationId"],
-                    LocationName = reader["LocationName"].ToString()!,
-                    IsActive = (bool)reader["IsActive"],
-                    CreatedDate = (DateTime)reader["CreatedDate"]
+                    LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                    LocationName = reader.GetString(reader.GetOrdinal("LocationName")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
                 });
             }
-            return list;
 
+            return list;
         }
         public async Task<Location?> GetByIdAsync(int locationId)
         {
             using var con = GetConnection();
-            using var cmd = new SqlCommand("usp_GetAllLocations", con);
+            using var cmd = new SqlCommand("dbo.usp_Location_GetById", con);
 
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@IncludeInactive", 1);
+
+            cmd.Parameters.Add("@LocationId", SqlDbType.Int)
+                          .Value = locationId;
 
             await con.OpenAsync();
+
             using var reader = await cmd.ExecuteReaderAsync();
 
-            while(await reader.ReadAsync())
+            if (await reader.ReadAsync())
             {
-                if ((int)reader["LocationId"] == locationId)
+                return new Location
                 {
-                    return new Location
-                    {
-                        LocationId = (int)reader["LocationId"],
-                        LocationName = reader["LocationName"].ToString()!,
-                        IsActive = (bool)reader["IsActive"],
-                        CreatedDate = (DateTime)reader["CreatedDate"]
-                    };
-                }
+                    LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                    LocationName = reader.GetString(reader.GetOrdinal("LocationName")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
+                };
             }
+
             return null;
-
         }
 
-        public async Task InsertAsync(string locationName)
+        public async Task AddAsync(string locationName)
         {
             using var con = GetConnection();
-            using var cmd = new SqlCommand("usp_AddLocation", con);
+            using var cmd = new SqlCommand("dbo.usp_Location_Create", con);
+
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@LocationName", locationName);
+
+            cmd.Parameters.Add("@LocationName", SqlDbType.NVarChar, 200)
+                          .Value = locationName;
 
             await con.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
-
         }
-        public async Task UpdateAsync(int locationId, string locationName, bool isActive)
+
+        public async Task UpdateAsync(int locationId, string locationName)
         {
             using var con = GetConnection();
-            using var cmd = new SqlCommand("usp_UpdateLocation", con);
+            using var cmd = new SqlCommand("dbo.usp_Location_Update", con);
+
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@LocationId", locationId);
-            cmd.Parameters.AddWithValue("@LocationName", locationName);
-            cmd.Parameters.AddWithValue("IsActive", isActive);
+
+            cmd.Parameters.Add("@LocationId", SqlDbType.Int)
+                          .Value = locationId;
+
+            cmd.Parameters.Add("@LocationName", SqlDbType.NVarChar, 200)
+                          .Value = locationName;
 
             await con.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
-
         }
-        public async Task SetInactiveAsync(int locationId)
+
+        public async Task DeactivateAsync(int locationId)
         {
             using var con = GetConnection();
-            using var cmd = new SqlCommand("usp_DeactivateLocation", con);
+            using var cmd = new SqlCommand("dbo.usp_Location_Deactivate", con);
+
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@LocationId", locationId);
+
+            cmd.Parameters.Add("@LocationId", SqlDbType.Int)
+                          .Value = locationId;
 
             await con.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
-
         }
 
-       public async Task<List<Location>> SearchLocationsAsync(string? searchTerm)
+        public async Task ActivateAsync(int locationId)
+        {
+            using var con = GetConnection();
+            using var cmd = new SqlCommand("dbo.usp_Location_Activate",con);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.Add("@LocationId", SqlDbType.Int)
+                          .Value = locationId;
+
+            await con.OpenAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<Location>> SearchAsync(string? searchTerm)
         {
             var list = new List<Location>();
 
             using var con = GetConnection();
-            using var cmd = new SqlCommand("usp_SearchLocations", con);
+            using var cmd = new SqlCommand("dbo.usp_Location_Search", con);
 
             cmd.CommandType = CommandType.StoredProcedure;
 
-            cmd.Parameters.AddWithValue(
-                "@SearchTerm",
-                string.IsNullOrEmpty(searchTerm) ? DBNull.Value : searchTerm
-            );
+            cmd.Parameters.Add("@SearchTerm", SqlDbType.NVarChar, 200)
+                          .Value = string.IsNullOrWhiteSpace(searchTerm)
+                              ? DBNull.Value
+                              : searchTerm.Trim();
 
             await con.OpenAsync();
 
@@ -133,8 +160,8 @@ namespace Tour_Module.Repository.Implementations
             {
                 list.Add(new Location
                 {
-                    LocationId = (int)reader["LocationId"],
-                    LocationName = reader["LocationName"].ToString()!
+                    LocationId = reader.GetInt32(reader.GetOrdinal("LocationId")),
+                    LocationName = reader.GetString(reader.GetOrdinal("LocationName"))
                 });
             }
 

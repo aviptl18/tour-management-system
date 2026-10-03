@@ -1,6 +1,6 @@
 ﻿namespace Tour_Module.DTOs.Option
 {
-    public class TourAllowedOptionDto
+    public class TourAddOnDto
     {
         public int OptionId { get; set; }
         public string OptionName { get; set; }

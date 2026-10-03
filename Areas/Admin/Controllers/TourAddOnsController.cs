@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Tour_Module.Services.Interfaces;
-using Tour_Module.ViewModels.Admin.Tours;
 
 namespace Tour_Module.Areas.Admin.Controllers
 {
     [Area("Admin")]
     public class TourAddOnsController : Controller
     {
-        private readonly ITourAllowedOptionService _tourAllowedOptionService;
+        private readonly ITourAddOnService _tourAddOnService;
 
         public TourAddOnsController(
-            ITourAllowedOptionService tourAllowedOptionService)
+            ITourAddOnService tourAddOnService)
         {
-            _tourAllowedOptionService = tourAllowedOptionService;
+            _tourAddOnService = tourAddOnService;
         }
 
         // =====================================================
@@ -24,8 +23,8 @@ namespace Tour_Module.Areas.Admin.Controllers
             if (tourId <= 0)
                 return BadRequest();
 
-            var vm = await _tourAllowedOptionService
-                .GetConfigurationDataAsync(tourId);
+            var vm = await _tourAddOnService
+                .GetConfigurationAsync(tourId);
 
             if (vm == null)
                 return NotFound();
@@ -34,19 +33,18 @@ namespace Tour_Module.Areas.Admin.Controllers
         }
 
         // =====================================================
-        // GET: Available Optional Add-Ons (AJAX)
+        // GET: Available Add-Ons (AJAX)
         // =====================================================
         [HttpGet]
-        public async Task<IActionResult>
-            GetAvailableOptionalOptions(int tourId)
+        public async Task<IActionResult> GetAvailableAddOns(int tourId)
         {
             if (tourId <= 0)
                 return BadRequest();
 
-            var options = await _tourAllowedOptionService
-                .GetAvailableOptionalOptionsForTourAsync(tourId);
+            var addOns = await _tourAddOnService
+                .GetAvailableAddOnsAsync(tourId);
 
-            return Json(options);
+            return Json(addOns);
         }
 
         // =====================================================
@@ -54,17 +52,20 @@ namespace Tour_Module.Areas.Admin.Controllers
         // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult>
-            AddOptionalAddOn([FromBody] AddRemoveAddOnRequest request)
+        public async Task<IActionResult> AddOptionalAddOn(
+            [FromBody] AddRemoveAddOnRequest request)
         {
-            if (request == null || request.TourId <= 0)
+            if (request == null ||
+                request.TourId <= 0 ||
+                request.OptionId <= 0)
+            {
                 return BadRequest();
+            }
 
-            await _tourAllowedOptionService
-                .AllowOptionForTourAsync(
+            await _tourAddOnService
+                .AddOptionalAddOnAsync(
                     request.TourId,
-                    request.OptionId,
-                    false); // always optional here
+                    request.OptionId);
 
             return Ok();
         }
@@ -74,14 +75,18 @@ namespace Tour_Module.Areas.Admin.Controllers
         // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult>
-            RemoveOptionalAddOn([FromBody] AddRemoveAddOnRequest request)
+        public async Task<IActionResult> RemoveOptionalAddOn(
+            [FromBody] AddRemoveAddOnRequest request)
         {
-            if (request == null || request.TourId <= 0)
+            if (request == null ||
+                request.TourId <= 0 ||
+                request.OptionId <= 0)
+            {
                 return BadRequest();
+            }
 
-            await _tourAllowedOptionService
-                .RemoveOptionFromTourAsync(
+            await _tourAddOnService
+                .RemoveOptionalAddOnAsync(
                     request.TourId,
                     request.OptionId);
 
@@ -95,6 +100,7 @@ namespace Tour_Module.Areas.Admin.Controllers
     public class AddRemoveAddOnRequest
     {
         public int TourId { get; set; }
+
         public int OptionId { get; set; }
     }
 }

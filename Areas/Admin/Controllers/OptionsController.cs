@@ -1,28 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Tour_Module.ViewModels.AddOns;
-using Tour_Module.Services.Interfaces;
-using System.Net.Sockets;
 using Tour_Module.Models.Entities;
+using Tour_Module.Services.Interfaces;
+using Tour_Module.ViewModels.Options;
 
 namespace Tour_Module.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class AddOnsController : Controller
+    public class OptionsController : Controller
     {
         private readonly IOptionService _optionService;
 
-        public AddOnsController(IOptionService optionService)
+        public OptionsController(IOptionService optionService)
         {
             _optionService = optionService;
         }
-
-        // Get : Admin/AddOns
 
         public async Task<IActionResult> Index()
         {
             var options = await _optionService.GetAllOptionsAsync();
 
-            var viewModel = options.Select(o => new AddOnListViewModel
+            var viewModel = options.Select(o => new OptionListViewModel
             {
                 OptionId = o.OptionId,
                 OptionName = o.OptionName,
@@ -35,18 +32,14 @@ namespace Tour_Module.Areas.Admin.Controllers
             return View(viewModel);
         }
 
-        // Get : Admin/AddOns/Create
-
         public IActionResult Create()
         {
-            return View(new AddOnCreateEditViewModel());
+            return View(new OptionCreateViewModel());
         }
-
-        // Post : Admin/AddOns/Create
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(AddOnCreateEditViewModel model)
+        public async Task<IActionResult> Create(OptionCreateViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
@@ -56,24 +49,22 @@ namespace Tour_Module.Areas.Admin.Controllers
                 OptionName = model.OptionName,
                 BasePrice = model.BasePrice,
                 Currency = model.Currency,
-                Category = model.Category,
-                IsActive = true
+                Category = model.Category
             };
 
-            await _optionService.AddOptionAsync(option);
+            await _optionService.CreateOptionAsync(option);
+
             return RedirectToAction(nameof(Index));
         }
 
-        // Get : Admin/AddOns/Edit
-
         public async Task<IActionResult> Edit(int id)
         {
-            var option = (await _optionService.GetAllOptionsAsync()).FirstOrDefault(o => o.OptionId == id );
+            var option = await _optionService.GetOptionByIdAsync(id);
 
             if (option == null)
                 return NotFound();
 
-            var viewModel = new AddOnCreateEditViewModel
+            var viewModel = new OptionEditViewModel
             {
                 OptionId = option.OptionId,
                 OptionName = option.OptionName,
@@ -86,18 +77,16 @@ namespace Tour_Module.Areas.Admin.Controllers
             return View(viewModel);
         }
 
-        // POST : Admin/Addons/Edit
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(AddOnCreateEditViewModel model)
+        public async Task<IActionResult> Edit(OptionEditViewModel model)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return View(model);
 
             var option = new Option
             {
-                OptionId = model.OptionId.Value,
+                OptionId = model.OptionId,
                 OptionName = model.OptionName,
                 BasePrice = model.BasePrice,
                 Currency = model.Currency,
@@ -106,16 +95,16 @@ namespace Tour_Module.Areas.Admin.Controllers
             };
 
             await _optionService.UpdateOptionAsync(option);
+
             return RedirectToAction(nameof(Index));
         }
-
-        // POST : Admin/AddOns/SetOptionStatus
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deactivate(int id)
         {
-            await _optionService.SetOptionStatusAsync(id,false);
+            await _optionService.DeactivateOptionAsync(id);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -123,7 +112,8 @@ namespace Tour_Module.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Activate(int id)
         {
-            await _optionService.SetOptionStatusAsync(id, true);
+            await _optionService.ActivateOptionAsync(id);
+
             return RedirectToAction(nameof(Index));
         }
     }

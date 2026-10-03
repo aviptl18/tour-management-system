@@ -1,49 +1,39 @@
-﻿@model Tour_Module.Models.Entities.Location
+﻿@model Tour_Module.ViewModels.Location.EditLocationViewModel
 
 @{
     ViewData["Title"] = "Edit Location";
 }
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
+<h2>Edit Location</h2>
 
-            <div class="card shadow-sm">
-                <div class="card-body">
+<form asp-action="Edit" method="post">
 
-                    <h5 class="mb-3">Edit Location</h5>
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                    <form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="LocationId" />
 
-                        <input type="hidden" asp-for="LocationId" />
+    <div class="mb-3">
+        <label asp-for="LocationName" class="form-label"></label>
 
-                        <div class="mb-3">
-                            <label class="form-label">Location Name</label>
-                            <input asp-for="LocationName" class="form-control" />
-                            <span asp-validation-for="LocationName" class="text-danger"></span>
-                        </div>
+        <input asp-for="LocationName"
+               class="form-control" />
 
-                        <div class="form-check mb-3">
-                            <input asp-for="IsActive" class="form-check-input" />
-                            <label class="form-check-label">
-                                Active
-                            </label>
-                        </div>
-
-                        @Html.ValidationSummary(false, "", new { @class = "text-danger mb-2" })
-
-                        <div class="d-flex justify-content-end">
-                            <a asp-action="Index" class="btn btn-secondary me-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary">
-                                Save
-                            </button>
-                        </div>
-
-                    </form>
-
-                </div>
-            </div>
-
-        </div>
+        <span asp-validation-for="LocationName"
+              class="text-danger"></span>
     </div>
-</div>
+
+    <button type="submit" class="btn btn-primary">
+        Save Changes
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary">
+        Cancel
+    </a>
+
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

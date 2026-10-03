@@ -1,0 +1,144 @@
+﻿@model List<Tour_Module.ViewModels.Options.OptionListViewModel>
+
+@{
+    ViewData["Title"] = "Options";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Options</h2>
+
+        <a asp-area="Admin"
+           asp-controller="Options"
+           asp-action="Create"
+           class="btn btn-primary">
+            Add Option
+        </a>
+    </div>
+
+    <div class="mb-3">
+        <input type="text"
+               id="optionSearch"
+               class="form-control"
+               placeholder="Search options..." />
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle"
+               id="optionTable">
+
+            <thead>
+                <tr>
+                    <th>Option Name</th>
+                    <th>Base Price</th>
+                    <th>Currency</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var option in Model)
+                {
+                    <tr>
+                        <td>@option.OptionName</td>
+
+                        <td>
+                            @option.BasePrice.ToString("0.00")
+                        </td>
+
+                        <td>@option.Currency</td>
+
+                        <td>@option.Category</td>
+
+                        <td>
+                            @if (option.IsActive)
+                            {
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+                            }
+                        </td>
+
+                        <td>
+                            <a asp-area="Admin"
+                               asp-controller="Options"
+                               asp-action="Edit"
+                               asp-route-id="@option.OptionId"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            @if (option.IsActive)
+                            {
+                                <form asp-area="Admin"
+                                      asp-controller="Options"
+                                      asp-action="Deactivate"
+                                      asp-route-id="@option.OptionId"
+                                      method="post"
+                                      class="d-inline">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Are you sure you want to deactivate this option?');">
+                                        Deactivate
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-area="Admin"
+                                      asp-controller="Options"
+                                      asp-action="Activate"
+                                      asp-route-id="@option.OptionId"
+                                      method="post"
+                                      class="d-inline">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-success"
+                                            onclick="return confirm('Are you sure you want to activate this option?');">
+                                        Activate
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script>
+        document.getElementById("optionSearch").addEventListener("keyup", function () {
+
+            const searchValue = this.value.toLowerCase();
+
+            const rows = document.querySelectorAll("#optionTable tbody tr");
+
+            rows.forEach(function (row) {
+
+                const rowText = row.textContent.toLowerCase();
+
+                row.style.display =
+                    rowText.includes(searchValue) ? "" : "none";
+            });
+        });
+    </script>
+}

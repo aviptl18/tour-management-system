@@ -6,7 +6,7 @@ namespace Tour_Module.Repository.Interfaces
 {
     public interface ILocationImageRepository
     {
-        Task<List<LocationImage>> GetImagesByLocationIdAsync(int locationId);
-        Task AddLocationImageAsync(LocationImage locationImage);
-    }   
+        Task<List<LocationImage>> GetByLocationIdAsync(int locationId);
+        Task AddAsync(LocationImage locationImage);
+    }
 }

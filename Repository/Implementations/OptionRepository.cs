@@ -14,37 +14,15 @@ namespace Tour_Module.Repository.Implementations
             _connectionString = connectionString;
         }
 
-        // Admin - Get all Option
         public async Task<List<Option>> GetAllAsync()
         {
             var options = new List<Option>();
 
             using (SqlConnection con = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand("usp_GetAllOptions", con))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_GetAll", con))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-                await con.OpenAsync();
 
-                using (SqlDataReader reader = await  cmd.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        options.Add(MapOption(reader));
-                    }
-                }
-            }
-            return options;
-        }
-
-        // System - Get active Option
-        public async Task<List<Option>> GetActiveAsync()
-        {
-            var options = new List<Option>();
-
-            using (SqlConnection con = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand("GetActiveOptions", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
                 await con.OpenAsync();
 
                 using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -55,79 +33,140 @@ namespace Tour_Module.Repository.Implementations
                     }
                 }
             }
+
             return options;
         }
-        public async Task AddAsync(Option option)
+
+        public async Task<List<Option>> GetActiveAsync()
         {
+            var options = new List<Option>();
+
             using (SqlConnection con = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand("usp_AddOption", con))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_GetActive", con))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                cmd.Parameters.AddWithValue("@OptionName", option.OptionName);
-                cmd.Parameters.AddWithValue("@BasePrice", option.BasePrice);
-                cmd.Parameters.AddWithValue("@Currency", option.Currency);
-                cmd.Parameters.AddWithValue("@Category", option.Category);
-
                 await con.OpenAsync();
-                await cmd.ExecuteNonQueryAsync();
-            }
-        }
-        public async Task UpdateAsync(Option option)
-        {
-            using (SqlConnection con = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand("usp_UpdateOption", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
 
-                cmd.Parameters.AddWithValue("@OptionId", option.OptionId);
-                cmd.Parameters.AddWithValue("@OptionName", option.OptionName);
-                cmd.Parameters.AddWithValue("@BasePrice", option.BasePrice);
-                cmd.Parameters.AddWithValue("@Currency", option.Currency);
-                cmd.Parameters.AddWithValue("@Category", option.Category);
-
-                await con.OpenAsync();
-                await cmd.ExecuteNonQueryAsync();
-            }
-        }
-
-        public async Task SetStatusAsync(int optionId, bool isActive)
-        {
-            using (SqlConnection con = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand("usp_SetOptionActiveStatus", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-
-                cmd.Parameters.AddWithValue("@OptionId", optionId);
-                cmd.Parameters.AddWithValue("@IsActive", isActive);
-
-                await con.OpenAsync();
-                await cmd.ExecuteNonQueryAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        options.Add(MapOption(reader));
+                    }
+                }
             }
 
-            
+            return options;
         }
 
         public async Task<Option?> GetByIdAsync(int optionId)
         {
             using (SqlConnection con = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand("usp_GetOptionById", con))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_GetById", con))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@OptionId", optionId);
+
+                cmd.Parameters.Add("@OptionId", SqlDbType.Int).Value = optionId;
 
                 await con.OpenAsync();
 
-                using var reader = await cmd.ExecuteReaderAsync();
+                using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return MapOption(reader);
+                    }
+                }
+            }
 
-                if(await reader.ReadAsync())
-                    return MapOption(reader);
+            return null;
+        }
 
-                return null;
+        public async Task CreateAsync(Option option)
+        {
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_Create", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add("@OptionName", SqlDbType.NVarChar, 150)
+                    .Value = option.OptionName;
+
+                var basePriceParameter = cmd.Parameters.Add("@BasePrice", SqlDbType.Decimal);
+                basePriceParameter.Precision = 10;
+                basePriceParameter.Scale = 2;
+                basePriceParameter.Value = option.BasePrice;
+
+                cmd.Parameters.Add("@Currency", SqlDbType.NVarChar, 10)
+                    .Value = option.Currency;
+
+                cmd.Parameters.Add("@Category", SqlDbType.NVarChar, 100)
+                    .Value = option.Category;
+
+                await con.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
             }
         }
 
-        // CENTRAL MAPPER
+        public async Task UpdateAsync(Option option)
+        {
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_Update", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add("@OptionId", SqlDbType.Int)
+                    .Value = option.OptionId;
+
+                cmd.Parameters.Add("@OptionName", SqlDbType.NVarChar, 150)
+                    .Value = option.OptionName;
+
+                var basePriceParameter = cmd.Parameters.Add("@BasePrice", SqlDbType.Decimal);
+                basePriceParameter.Precision = 10;
+                basePriceParameter.Scale = 2;
+                basePriceParameter.Value = option.BasePrice;
+
+                cmd.Parameters.Add("@Currency", SqlDbType.NVarChar, 10)
+                    .Value = option.Currency;
+
+                cmd.Parameters.Add("@Category", SqlDbType.NVarChar, 100)
+                    .Value = option.Category;
+
+                await con.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        public async Task DeactivateAsync(int optionId)
+        {
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_Deactivate", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add("@OptionId", SqlDbType.Int)
+                    .Value = optionId;
+
+                await con.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        public async Task ActivateAsync(int optionId)
+        {
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand("usp_Option_Activate", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add("@OptionId", SqlDbType.Int)
+                    .Value = optionId;
+
+                await con.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
 
         private Option MapOption(SqlDataReader reader)
         {
@@ -138,9 +177,9 @@ namespace Tour_Module.Repository.Implementations
                 BasePrice = reader.GetDecimal(reader.GetOrdinal("BasePrice")),
                 Currency = reader.GetString(reader.GetOrdinal("Currency")),
                 Category = reader.GetString(reader.GetOrdinal("Category")),
-                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
             };
         }
     }
 }
-

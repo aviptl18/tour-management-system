@@ -8,11 +8,11 @@ namespace Tour_Module.Repository.Interfaces
     {
         Task<List<Location>> GetAllAsync(bool includeInactive);
         Task<Location?> GetByIdAsync(int locationId);
-
-        Task InsertAsync(string locationName);
-        Task UpdateAsync(int locationId, string locationName, bool isActive);
-        Task SetInactiveAsync(int locationId);
-        Task<List<Location>> SearchLocationsAsync(string? searchTerm);
+        Task AddAsync(string locationName);
+        Task UpdateAsync(int locationId, string locationName);
+        Task DeactivateAsync(int locationId);
+        Task ActivateAsync(int locationId);
+        Task<List<Location>> SearchAsync(string? searchTerm);
 
     }
 }

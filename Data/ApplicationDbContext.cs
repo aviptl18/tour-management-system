@@ -20,8 +20,7 @@ namespace Tour_Module.Data
         public DbSet<Tour> Tours { get; set; }
         public DbSet<LocationImage> LocationImages { get; set; }
         public DbSet<TourImages> TourImages { get; set; }
-        public DbSet<OptionDefinition> OptionDefinitions { get; set; }
-        public DbSet<TourAllowedOptions> TourAllowedOptions { get; set; }
+        public DbSet<TourAddOn> TourAddOns { get; set; }
         public DbSet<TourDraft> TourDrafts { get; set; }
         public DbSet<TourDraftImage> TourDraftImages { get; set; }
 
@@ -61,14 +60,11 @@ namespace Tour_Module.Data
             modelBuilder.Entity<TourImages>()
                 .HasKey(ti => ti.TourImageId);
 
-            modelBuilder.Entity<OptionDefinition>()
-                .ToTable("OptionDefinition");
-
             // ------------------------------------------------------------
             // 🔥 CRITICAL FIX — TABLE NAME MISMATCH
             // ------------------------------------------------------------
 
-            modelBuilder.Entity<TourAllowedOptions>()
+            modelBuilder.Entity<TourAddOn>()
                 .ToTable("TourAllowedOption")          // ✅ EXACT DB TABLE NAME
                 .HasKey(x => new { x.TourId, x.OptionId });
 

@@ -1,12 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Tour_Module.Models.Entities
+﻿namespace Tour_Module.ViewModels.Options
 {
-    [Table("OptionDefinition")]
-    public class OptionDefinition
+    public class OptionListViewModel
     {
-        [Key]
         public int OptionId { get; set; }
 
         public string OptionName { get; set; } = string.Empty;
@@ -18,7 +13,5 @@ namespace Tour_Module.Models.Entities
         public string Category { get; set; } = string.Empty;
 
         public bool IsActive { get; set; }
-
-        public DateTime CreatedDate { get; set; }
     }
 }

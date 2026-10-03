@@ -3,8 +3,11 @@
     public class Location
     {
         public int LocationId { get; set; }
-        public string LocationName { get; set; }
+
+        public string LocationName { get; set; } = string.Empty;
+
         public bool IsActive { get; set; }
+
         public DateTime CreatedDate { get; set; }
     }
 }

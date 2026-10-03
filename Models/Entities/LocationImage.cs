@@ -6,8 +6,9 @@ namespace Tour_Module.Models.Entities
     {
         [Key]
         public int ImageId { get; set; }
-        public int LocationId { get; set; }
-        public string ImageUrl { get; set; }
 
+        public int LocationId { get; set; }
+
+        public string ImageUrl { get; set; } = string.Empty;
     }
 }

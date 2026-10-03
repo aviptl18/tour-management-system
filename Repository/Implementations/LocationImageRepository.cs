@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Tour_Module.Data;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using System.Data;
 using Tour_Module.Models.Entities;
 using Tour_Module.Repository.Interfaces;
 
@@ -7,27 +8,73 @@ namespace Tour_Module.Repository.Implementations
 {
     public class LocationImageRepository : ILocationImageRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _config;
 
-        public LocationImageRepository(ApplicationDbContext context)
+        public LocationImageRepository(IConfiguration config)
         {
-            _context = context;
+            _config = config;
         }
 
-        public async Task<List<LocationImage>> GetImagesByLocationIdAsync(int locationId)
+        private SqlConnection GetConnection()
         {
-            var images = await _context.LocationImages
-                .FromSqlRaw("EXEC SP_Location_GetImagesByLocationId @p0", locationId)
-                .ToListAsync();
-
-            return images;
+            return new SqlConnection(
+                _config.GetConnectionString("DefaultConnection"));
         }
 
-        public async Task AddLocationImageAsync(LocationImage locationImage)
+        public async Task<List<LocationImage>> GetByLocationIdAsync(int locationId)
         {
-            await _context.LocationImages.AddAsync(locationImage);
-            await _context.SaveChangesAsync();
+            var list = new List<LocationImage>();
+
+            using var con = GetConnection();
+            using var cmd = new SqlCommand(
+                "dbo.usp_Location_GetImages",
+                con);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.Add("@LocationId", SqlDbType.Int)
+                          .Value = locationId;
+
+            await con.OpenAsync();
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                list.Add(new LocationImage
+                {
+                    ImageId = reader.GetInt32(
+                        reader.GetOrdinal("ImageId")),
+
+                    LocationId = reader.GetInt32(
+                        reader.GetOrdinal("LocationId")),
+
+                    ImageUrl = reader.GetString(
+                        reader.GetOrdinal("ImageUrl"))
+                });
+            }
+
+            return list;
         }
 
+        public async Task AddAsync(LocationImage locationImage)
+        {
+            using var con = GetConnection();
+            using var cmd = new SqlCommand(
+                "dbo.usp_Location_AddImage",
+                con);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.Add("@LocationId", SqlDbType.Int)
+                          .Value = locationImage.LocationId;
+
+            cmd.Parameters.Add("@ImageUrl", SqlDbType.NVarChar, 500)
+                          .Value = locationImage.ImageUrl;
+
+            await con.OpenAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 }

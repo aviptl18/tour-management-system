@@ -31,8 +31,8 @@ builder.Services.AddScoped<IOptionRepository>(
     _ => new OptionRepository(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<ITourAllowedOptionRepository>(
-    _ => new TourAllowedOptionRepository(
+builder.Services.AddScoped<ITourAddOnRepository>(
+    _ => new TourAddOnRepository(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IUserTourRepository, UserTourRepository>();
@@ -52,7 +52,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddScoped<IOptionService, OptionService>();
 
-builder.Services.AddScoped<ITourAllowedOptionService, TourAllowedOptionService>();
+builder.Services.AddScoped<ITourAddOnService, TourAddOnService>();
 
 builder.Services.AddScoped<IUserTourService, UserTourService>();
 

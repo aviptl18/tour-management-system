@@ -140,7 +140,7 @@ namespace Tour_Module.Areas.Admin.Controllers
                 .Select(x => (int?)x.LocationImageId)
                 .FirstOrDefault();
 
-            var locations = await _locationService.GetActiveLocationsForToursAsync();
+            var locations = await _locationService.GetAvailableForTourAsync();
 
             return View(new CreateTourStep2ViewDto
             {
@@ -196,7 +196,7 @@ namespace Tour_Module.Areas.Admin.Controllers
 
             if (!ModelState.IsValid)
             {
-                var locations = await _locationService.GetActiveLocationsForToursAsync();
+                var locations = await _locationService.GetAvailableForTourAsync();
 
                 return View(new CreateTourStep2ViewDto
                 {
@@ -447,7 +447,7 @@ namespace Tour_Module.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> GetImagesByLocation(int id)
         {
-            var images = await _locationImageService.GetImagesByLocationIdAsync(id);
+            var images = await _locationImageService.GetByLocationIdAsync(id);
             return Json(images.Select(i => new { i.ImageId, i.ImageUrl }));
         }
 
@@ -477,7 +477,7 @@ namespace Tour_Module.Areas.Admin.Controllers
                 using var stream = new FileStream(path, FileMode.Create);
                 await file.CopyToAsync(stream);
 
-                await _locationImageService.AddLocationImageAsync(new LocationImage
+                await _locationImageService.AddAsync(new LocationImage
                 {
                     LocationId = locationId,
                     ImageUrl = $"/Images/Locations/{locationId}/{name}"
@@ -485,7 +485,7 @@ namespace Tour_Module.Areas.Admin.Controllers
             }
 
             return Json(
-                await _locationImageService.GetImagesByLocationIdAsync(locationId));
+                await _locationImageService.GetByLocationIdAsync(locationId));
         }
 
         // Save Draft

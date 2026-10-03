@@ -6,12 +6,13 @@ namespace Tour_Module.Services.Interfaces
 {
     public interface ILocationService
     {
-        Task<List<Location>> GetAllLocationsForAdminAsync();
-        Task<List<Location>> GetActiveLocationsForToursAsync();
-        Task<Location> GetLocationByIdAsync(int locationId);
-        Task CreateLocationAsync(string name);
-        Task UpdateLocationAsync(int id, string name, bool isActive);
-        Task DeactivateLocationAsync(int id);
-        Task<List<Location>> SearchLocationsAsync(string? term);
+        Task<List<Location>> GetAllAsync();
+        Task<List<Location>> GetAvailableForTourAsync();
+        Task<Location?> GetByIdAsync(int locationId);
+        Task CreateAsync(string name);
+        Task UpdateAsync(int id, string name);
+        Task DeactivateAsync(int id);
+        Task ActivateAsync(int id);
+        Task<List<Location>> SearchAsync(string? term);
     }
 }
