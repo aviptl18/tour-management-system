@@ -1,5 +1,4 @@
-﻿@using Tour_Module.DTOs.Tours.View
-@model CreateTourStep1ViewDto
+﻿@model Tour_Module.ViewModels.Admin.Tours.CreateStep1ViewModel
 
 @{
     ViewData["Title"] = "Add New Tour";
@@ -47,32 +46,45 @@
         <input type="hidden" asp-for="DraftId" />
 
         <div class="mb-4">
-            <label class="form-label">Tour Title <span class="text-danger">*</span></label>
+            <label class="form-label">
+                Tour Title <span class="text-danger">*</span>
+            </label>
+
             <input asp-for="TourTitle"
                    class="form-control shadow-sm"
                    placeholder="Enter tour name" />
-            <span asp-validation-for="TourTitle" class="text-danger"></span>
+
+            <span asp-validation-for="TourTitle"
+                  class="text-danger"></span>
         </div>
 
         <div class="mb-4">
-            <label class="form-label">Description <span class="text-danger">*</span></label>
+            <label class="form-label">
+                Description <span class="text-danger">*</span>
+            </label>
+
             <textarea asp-for="Overview"
                       class="form-control shadow-sm"
                       rows="4"
                       placeholder="Enter short overview about the tour"></textarea>
-            <span asp-validation-for="Overview" class="text-danger"></span>
+
+            <span asp-validation-for="Overview"
+                  class="text-danger"></span>
         </div>
 
         <div class="d-flex justify-content-between mt-4">
+
             <button type="button"
                     class="btn btn-secondary"
                     onclick="cancelDraft(@Model.DraftId)">
                 Cancel
             </button>
-            
-            <button type="submit" class="btn btn-primary">
+
+            <button type="submit"
+                    class="btn btn-primary">
                 Next Step →
             </button>
+
         </div>
     </form>
 </div>
@@ -89,7 +101,9 @@
             method: 'POST',
             headers: {
                 'RequestVerificationToken':
-                    document.querySelector('input[name="__RequestVerificationToken"]').value,
+                    document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    ).value,
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: `draftId=${id}`

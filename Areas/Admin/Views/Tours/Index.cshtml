@@ -103,6 +103,38 @@
         }
 
         /* ==============================
+                   DELETE MODAL
+                ============================== */
+        .delete-tour-modal .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .delete-tour-modal .modal-header {
+            border-bottom: none;
+            padding: 24px 28px 10px;
+        }
+
+        .delete-tour-modal .modal-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .delete-tour-modal .modal-body {
+            padding: 12px 28px 20px;
+        }
+
+            .delete-tour-modal .modal-body p {
+                margin-bottom: 10px;
+            }
+
+        .delete-tour-modal .modal-footer {
+            border-top: none;
+            padding: 10px 28px 24px;
+        }
+
+        /* ==============================
                    RESPONSIVE
                 ============================== */
         @@media (max-width: 1200px) {
@@ -117,6 +149,7 @@
 
     <!-- HEADER -->
     <div class="admin-page-header">
+
         <h2>Tours</h2>
 
         <a asp-area="Admin"
@@ -125,18 +158,22 @@
            class="btn btn-primary">
             + Create Tour
         </a>
+
     </div>
 
     <!-- TOUR LIST -->
     <div class="admin-tour-list">
+
         @foreach (var tour in Model)
         {
             <div class="admin-tour-card">
 
                 <!-- IMAGE -->
                 <div class="tour-image">
+
                     <img src="@(tour.CoverImageUrl ?? "/images/placeholder.jpg")"
                          alt="@tour.TourTitle" />
+
                 </div>
 
                 <!-- CONTENT -->
@@ -150,9 +187,12 @@
 
                     <div class="tour-price">
                         Starting from
-                        <span>₹@(tour.TotalPrice?.ToString("0.00") ?? "0.00")</span>
+                        <span>
+                            ₹@(tour.TotalPrice?.ToString("0.00") ?? "0.00")
+                        </span>
                     </div>
 
+                    <!-- ACTIONS -->
                     <div class="tour-actions">
 
                         <a asp-action="Edit"
@@ -177,16 +217,133 @@
                             View
                         </a>
 
-                        <a asp-action="Delete"
-                           asp-route-id="@tour.TourId"
-                           class="btn btn-outline-danger btn-sm">
+                        <!-- DELETE BUTTON -->
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteTourModal"
+                                data-tour-id="@tour.TourId"
+                                data-tour-title="@tour.TourTitle">
                             Delete
-                        </a>
+                        </button>
+
                     </div>
 
                 </div>
+
             </div>
         }
+
     </div>
 
 </div>
+
+
+<!-- =========================================================
+     DELETE TOUR CONFIRMATION MODAL
+========================================================= -->
+
+<div class="modal fade delete-tour-modal"
+     id="deleteTourModal"
+     tabindex="-1"
+     aria-labelledby="deleteTourModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header">
+
+                <h5 class="modal-title"
+                    id="deleteTourModalLabel">
+                    Delete Tour
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body">
+
+                <p>
+                    Are you sure you want to delete
+                    <strong id="deleteTourName"></strong>?
+                </p>
+
+                <p class="text-muted mb-0">
+                    This action is permanent. The tour and its
+                    associated tour data will be deleted.
+                </p>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <form asp-area="Admin"
+                      asp-controller="Tours"
+                      asp-action="DeleteConfirmed"
+                      method="post"
+                      id="deleteTourForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           id="deleteTourId"
+                           name="id" />
+
+                    <button type="submit"
+                            class="btn btn-danger">
+                        Delete
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     DELETE TOUR MODAL SCRIPT
+========================================================= -->
+
+<script>
+    document
+        .getElementById("deleteTourModal")
+        .addEventListener("show.bs.modal", function (event) {
+
+            const button = event.relatedTarget;
+
+            const tourId =
+                button.getAttribute("data-tour-id");
+
+            const tourTitle =
+                button.getAttribute("data-tour-title");
+
+            document
+                .getElementById("deleteTourId")
+                .value = tourId;
+
+            document
+                .getElementById("deleteTourName")
+                .textContent = '"' + tourTitle + '"';
+        });
+</script>

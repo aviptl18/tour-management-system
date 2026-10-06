@@ -1,301 +1,377 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using Tour_Module.Data;
-using Tour_Module.DTOs.Common;
 using Tour_Module.DTOs.Tours;
-using Tour_Module.Models.Entities;
 using Tour_Module.Repository.Interfaces;
 using Tour_Module.ViewModels.Admin.Tours;
-
 
 namespace Tour_Module.Repository.Implementations
 {
     public class TourRepository : ITourRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly string _connectionString;
 
-        public TourRepository(ApplicationDbContext context)
+        public TourRepository(string connectionString)
         {
-            _context = context
-                ?? throw new ArgumentNullException(nameof(context));
+            _connectionString = connectionString;
         }
 
-        // ============================================================
-        // READ — GET ALL TOURS (ADMIN INDEX)
-        // ============================================================
-        public async Task<IEnumerable<TourDto>> GetAllToursAsync()
-        {
-            // Uses SP for optimized listing
-            return await _context.TourDtos
-                .FromSqlRaw("EXEC usp_GetAllTours")
-                .AsNoTracking()
-                .ToListAsync();
-        }
+        // =========================================================
+        // READ - GET ALL TOURS
+        // =========================================================
 
-        // ============================================================
-        // READ — GET TOUR DETAILS (ADMIN DETAILS PAGE)
-        // ============================================================
-        // ============================================================
-        // READ — ADMIN TOUR DETAILS (READ MODEL)
-        // ============================================================
-        public async Task<AdminTourDetailVM?> GetAdminTourDetailsAsync(int tourId)
+        public async Task<List<TourDto>> GetAllAsync()
         {
-            // 1️⃣ Tour + Location
-            var tour = await (
-                from t in _context.Tours
-                join l in _context.Locations
-                    on t.LocationId equals l.LocationId
-                where t.TourId == tourId
-                select new
+            var tours = new List<TourDto>();
+
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_Tour_GetAll", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                await con.OpenAsync();
+
+                using (SqlDataReader reader =
+                    await cmd.ExecuteReaderAsync())
                 {
-                    t.TourId,
-                    t.TourTitle,
-                    t.Overview,
-                    t.Duration,
-                    t.BasePrice,
-                    t.IncludedTotal,
-                    t.TotalPrice,
-                    LocationName = l.LocationName
+                    while (await reader.ReadAsync())
+                    {
+                        tours.Add(new TourDto
+                        {
+                            TourId = reader.GetInt32(
+                                reader.GetOrdinal("TourId")),
+
+                            LocationId = reader.GetInt32(
+                                reader.GetOrdinal("LocationId")),
+
+                            LocationName = reader.GetString(
+                                reader.GetOrdinal("LocationName")),
+
+                            TourTitle = reader.GetString(
+                                reader.GetOrdinal("TourTitle")),
+
+                            Duration = reader.IsDBNull(
+                                reader.GetOrdinal("Duration"))
+                                ? null
+                                : reader.GetString(
+                                    reader.GetOrdinal("Duration")),
+
+                            Overview = reader.IsDBNull(
+                                reader.GetOrdinal("Overview"))
+                                ? null
+                                : reader.GetString(
+                                    reader.GetOrdinal("Overview")),
+
+                            BasePrice = reader.IsDBNull(
+                                reader.GetOrdinal("BasePrice"))
+                                ? null
+                                : reader.GetDecimal(
+                                    reader.GetOrdinal("BasePrice")),
+
+                            TotalPrice = reader.IsDBNull(
+                                reader.GetOrdinal("TotalPrice"))
+                                ? null
+                                : reader.GetDecimal(
+                                    reader.GetOrdinal("TotalPrice")),
+
+                            CoverImageUrl = reader.IsDBNull(
+                                reader.GetOrdinal("CoverImageUrl"))
+                                ? null
+                                : reader.GetString(
+                                    reader.GetOrdinal("CoverImageUrl"))
+                        });
+                    }
                 }
-            ).AsNoTracking().FirstOrDefaultAsync();
+            }
 
-            if (tour == null)
-                return null;
+            return tours;
+        }
 
-            // 2️⃣ Images (cover + gallery)
-            var images = await (
-                from ti in _context.TourImages
-                join li in _context.LocationImages
-                    on ti.ImageId equals li.ImageId
-                where ti.TourId == tourId
-                select new
+        // =========================================================
+        // READ - GET TOUR DETAILS
+        // =========================================================
+
+        public async Task<TourDetailsViewModel?> GetDetailsAsync(
+            int tourId)
+        {
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_Tour_GetById", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@TourId",
+                    SqlDbType.Int).Value = tourId;
+
+                await con.OpenAsync();
+
+                using (SqlDataReader reader =
+                    await cmd.ExecuteReaderAsync())
                 {
-                    li.ImageUrl,
-                    ti.IsCoverImage
+                    // =====================================================
+                    // RESULT SET 1 — CORE TOUR DETAILS
+                    // =====================================================
+
+                    if (!await reader.ReadAsync())
+                        return null;
+
+                    var tour = new TourDetailsViewModel
+                    {
+                        TourId = reader.GetInt32(
+                            reader.GetOrdinal("TourId")),
+
+                        TourTitle = reader.GetString(
+                            reader.GetOrdinal("TourTitle")),
+
+                        LocationName = reader.GetString(
+                            reader.GetOrdinal("LocationName")),
+
+                        Overview = reader.IsDBNull(
+                            reader.GetOrdinal("Overview"))
+                            ? null
+                            : reader.GetString(
+                                reader.GetOrdinal("Overview")),
+
+                        Duration = reader.IsDBNull(
+                            reader.GetOrdinal("Duration"))
+                            ? null
+                            : reader.GetString(
+                                reader.GetOrdinal("Duration")),
+
+                        BasePrice = reader.IsDBNull(
+                            reader.GetOrdinal("BasePrice"))
+                            ? 0
+                            : reader.GetDecimal(
+                                reader.GetOrdinal("BasePrice")),
+
+                        IncludedTotal = reader.IsDBNull(
+                            reader.GetOrdinal("IncludedTotal"))
+                            ? 0
+                            : reader.GetDecimal(
+                                reader.GetOrdinal("IncludedTotal")),
+
+                        TotalPrice = reader.IsDBNull(
+                            reader.GetOrdinal("TotalPrice"))
+                            ? 0
+                            : reader.GetDecimal(
+                                reader.GetOrdinal("TotalPrice")),
+
+                        CoverImageUrl = reader.IsDBNull(
+                            reader.GetOrdinal("CoverImageUrl"))
+                            ? null
+                            : reader.GetString(
+                                reader.GetOrdinal("CoverImageUrl"))
+                    };
+
+
+                    // =====================================================
+                    // RESULT SET 2 — ALL TOUR IMAGES
+                    // =====================================================
+
+                    if (await reader.NextResultAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            if (!reader.IsDBNull(
+                                reader.GetOrdinal("ImageUrl")))
+                            {
+                                tour.ImageUrls.Add(
+                                    reader.GetString(
+                                        reader.GetOrdinal("ImageUrl")));
+                            }
+                        }
+                    }
+
+
+                    // =====================================================
+                    // RESULT SET 3 — ALLOWED ADD-ONS
+                    // =====================================================
+
+                    if (await reader.NextResultAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            if (!reader.IsDBNull(
+                                reader.GetOrdinal("OptionName")))
+                            {
+                                tour.AddOns.Add(
+                                    reader.GetString(
+                                        reader.GetOrdinal("OptionName")));
+                            }
+                        }
+                    }
+
+
+                    return tour;
                 }
-            ).AsNoTracking().ToListAsync();
-
-            // 3️⃣ Allowed Add-ons
-            //var addOns = await (
-            //    from tao in _context.TourAllowedOptions
-            //    join od in _context.OptionDefinitions
-            //        on tao.OptionId equals od.OptionId
-            //    where tao.TourId == tourId
-            //    select od.OptionName
-            //).AsNoTracking().ToListAsync();
-
-            // 4️⃣ Map to ViewModel
-            return new AdminTourDetailVM
-            {
-                TourId = tour.TourId,
-                TourTitle = tour.TourTitle,
-                LocationName = tour.LocationName,
-                Overview = tour.Overview,
-                Duration = tour.Duration,
-                BasePrice = tour.BasePrice ?? 0,
-                IncludedTotal = tour.IncludedTotal ?? 0,
-                TotalPrice = tour.TotalPrice ?? 0,
-
-                CoverImageUrl = images
-                    .FirstOrDefault(x => x.IsCoverImage)?.ImageUrl,
-
-                ImageUrls = images
-                    .Select(x => x.ImageUrl)
-                    .ToList(),
-
-                //AddOns = addOns
-            };
-        }
-
-        // ============================================================
-        // WRITE — CREATE TOUR (CORE DATA ONLY)
-        // ============================================================
-        public async Task<int> AddTourAsync(
-            int locationId,
-            string tourTitle,
-            string? duration,
-            decimal basePrice,
-            string? overview)
-        {
-            // This SP ONLY inserts into Tours table
-            var parameters = new[]
-            {
-                new SqlParameter("@LocationId", locationId),
-                new SqlParameter("@TourTitle", tourTitle),
-                new SqlParameter("@Duration", duration ?? (object)DBNull.Value),
-                new SqlParameter("@BasePrice", basePrice),
-                new SqlParameter("@Overview", overview ?? (object)DBNull.Value)
-            };
-
-            var result = await _context.Set<ScalarIntResult>()
-                .FromSqlRaw(
-                    "EXEC dbo.usp_AddTours @LocationId,@TourTitle,@Duration,@BasePrice,@Overview",
-                    parameters)
-                .AsNoTracking()
-                .ToListAsync();
-
-            if (!result.Any())
-                throw new InvalidOperationException("Tour creation failed.");
-
-            return result.First().NewTourId;
-        }
-
-        // ============================================================
-        // WRITE — INSERT TOUR IMAGE (SNAPSHOT)
-        // ============================================================
-        public async Task InsertTourImageAsync(
-            int tourId,
-            int imageId,
-            bool isCoverImage)
-        {
-            // 1️⃣ Insert TourImage using EF (TRACKED)
-            var tourImage = new TourImages
-            {
-                TourId = tourId,
-                ImageId = imageId,
-                IsCoverImage = isCoverImage
-            };
-
-            _context.TourImages.Add(tourImage);
-            await _context.SaveChangesAsync(); // 🔥 TourImageId is generated here
-
-            // 2️⃣ If this is cover image, update Tours table
-            if (isCoverImage)
-            {
-                var tour = await _context.Tours
-                    .Where(t => t.TourId == tourId)
-                    .FirstAsync();
-
-                tour.CoverImageId = tourImage.TourImageId;
-
-                await _context.SaveChangesAsync();
             }
         }
 
+        // =========================================================
+        // PUBLISH - CREATE LIVE TOUR FROM COMPLETED DRAFT
+        // =========================================================
 
-
-        // ============================================================
-        // WRITE — UPDATE TOUR (LEGACY, WILL REFACTOR LATER)
-        // ============================================================
-        public async Task UpdateTourAsync(Tour tour)
+        public async Task<int> PublishFromDraftAsync(
+            int draftId,
+            int adminId)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC usp_UpdateTour @p0,@p1,@p2,@p3,@p4,@p5,@p6",
-                tour.TourId,
-                tour.LocationId,
-                tour.TourTitle,
-                tour.Duration,
-                tour.Overview
-            );
-        }
-
-        // ============================================================
-        // WRITE — DELETE TOUR
-        // ============================================================
-        public async Task DeleteTourAsync(int tourId)
-        {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC usp_DeleteTour @p0",
-                tourId
-            );
-        }
-
-        // PUBLISH TOUR
-
-        public async Task<int> PublishTourAsync(int draftId, int adminId)
-        {
-            using var command = _context.Database.GetDbConnection().CreateCommand();
-
-            command.CommandText = "usp_PublishTour";
-            command.CommandType = CommandType.StoredProcedure;
-
-            command.Parameters.Add(new SqlParameter("@DraftId", draftId));
-            command.Parameters.Add(new SqlParameter("@AdminId", adminId));
-
-            var outputId = new SqlParameter("@NewTourId", SqlDbType.Int)
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_Tour_Publish", con))
             {
-                Direction = ParameterDirection.Output
-            };
+                cmd.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add(outputId);
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
 
-            if (command.Connection.State != ConnectionState.Open)
-                await command.Connection.OpenAsync();
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
 
-            await command.ExecuteNonQueryAsync();
+                SqlParameter newTourIdParameter =
+                    cmd.Parameters.Add(
+                        "@NewTourId",
+                        SqlDbType.Int);
 
-            return (int)outputId.Value;
+                newTourIdParameter.Direction =
+                    ParameterDirection.Output;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+
+                return Convert.ToInt32(
+                    newTourIdParameter.Value);
+            }
         }
 
-        // Update Tour
+        // =========================================================
+        // EDIT - GET ACTIVE DRAFT ID FOR TOUR
+        // =========================================================
 
-        public async Task<int?> GetActiveDraftForTourAsync(int tourId)
+        public async Task<int?> GetActiveDraftIdAsync(
+            int tourId)
         {
-            using var command = _context.Database.GetDbConnection().CreateCommand();
-
-            command.CommandText = "usp_GetActiveDraftForTour";
-            command.CommandType = CommandType.StoredProcedure;
-
-            command.Parameters.Add(new SqlParameter("@TourId", tourId));
-
-            if (command.Connection.State != ConnectionState.Open)
-                await command.Connection.OpenAsync();
-
-            var result = await command.ExecuteScalarAsync();
-
-            if(result == null || result == DBNull.Value)
-                return null;
-
-            return Convert.ToInt32(result);
-        }
-
-        public async Task<int> CreateTourDraftFromLiveAsync(int tourId, int adminId)
-        {
-            using var command = _context.Database.GetDbConnection().CreateCommand();
-
-            command.CommandText = "usp_CreateTourDraftFromLive";
-            command.CommandType = CommandType.StoredProcedure;
-
-            command.Parameters.Add(new SqlParameter("@TourId", tourId));
-            command.Parameters.Add(new SqlParameter("@AdminId", adminId));
-
-            var draftParam = new SqlParameter("@DraftId", SqlDbType.Int)
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_GetActiveForTour", con))
             {
-                Direction = ParameterDirection.Output
-            };
+                cmd.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add(draftParam);
+                cmd.Parameters.Add(
+                    "@TourId",
+                    SqlDbType.Int).Value = tourId;
 
-            if (command.Connection.State != ConnectionState.Open)
-                await command.Connection.OpenAsync();
+                await con.OpenAsync();
 
-            await command.ExecuteNonQueryAsync();
+                object? result =
+                    await cmd.ExecuteScalarAsync();
 
-            if (draftParam.Value == DBNull.Value)
-                throw new Exception("Draft creation failed.");
+                if (result == null ||
+                    result == DBNull.Value)
+                {
+                    return null;
+                }
 
-            return Convert.ToInt32(draftParam.Value);
+                return Convert.ToInt32(result);
+            }
         }
 
-        public async Task UpdateTourFromDraftAsync(int draftId, int adminId)
+        // =========================================================
+        // EDIT - CREATE DRAFT FROM EXISTING TOUR
+        // =========================================================
+
+        public async Task<int> CreateDraftFromTourAsync(
+            int tourId,
+            int adminId)
         {
-            using var command = _context.Database.GetDbConnection().CreateCommand();
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_CreateFromTour", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
 
-            command.CommandText = "usp_UpdateTourFromDraft";
-            command.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add(
+                    "@TourId",
+                    SqlDbType.Int).Value = tourId;
 
-            command.Parameters.Add(new SqlParameter("@DraftId", draftId));
-            command.Parameters.Add(new SqlParameter("@AdminId", adminId));
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
 
-            if (command.Connection.State != ConnectionState.Open)
-                await command.Connection.OpenAsync();
+                SqlParameter draftIdParameter =
+                    cmd.Parameters.Add(
+                        "@DraftId",
+                        SqlDbType.Int);
 
-            await command.ExecuteNonQueryAsync();
+                draftIdParameter.Direction =
+                    ParameterDirection.Output;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+
+                return Convert.ToInt32(
+                    draftIdParameter.Value);
+            }
+        }
+
+        // =========================================================
+        // EDIT - UPDATE LIVE TOUR FROM COMPLETED DRAFT
+        // =========================================================
+
+        public async Task UpdateFromDraftAsync(
+            int draftId,
+            int adminId)
+        {
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_Tour_UpdateFromDraft", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        public async Task DeleteAsync(int tourId)
+        {
+            using SqlConnection con =
+                new SqlConnection(_connectionString);
+
+            using SqlCommand cmd =
+                new SqlCommand(
+                    "usp_Tour_Delete",
+                    con);
+
+            cmd.CommandType =
+                CommandType.StoredProcedure;
+
+            cmd.Parameters.Add(
+                "@TourId",
+                SqlDbType.Int).Value = tourId;
+
+            await con.OpenAsync();
+
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

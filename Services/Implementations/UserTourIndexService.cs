@@ -20,7 +20,7 @@ namespace Tour_Module.Services.Implementations
             // TEMPORARY reuse of existing repo
             // Later this can switch to:
             // usp_GetActiveToursForUser
-            return await _tourRepository.GetAllToursAsync();
+            return await _tourRepository.GetAllAsync();
         }
     }
 }

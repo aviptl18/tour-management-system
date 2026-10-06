@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Tour_Module.DTOs.Tours;
-using Tour_Module.Models.Entities;
 using Tour_Module.ViewModels.Admin.Tours;
 
 namespace Tour_Module.Services.Interfaces
@@ -12,46 +11,39 @@ namespace Tour_Module.Services.Interfaces
         // READ OPERATIONS
         // ============================================================
 
-        // Returns all tours for admin index page
+        // Returns all tours for the admin tour listing page.
         Task<IEnumerable<TourDto>> GetAllToursAsync();
 
-        // Returns full tour details (used in admin details page)
-        Task<AdminTourDetailVM?> GetAdminTourDetailAsync(int tourId);
+        // Returns details of one tour for the admin details page.
+        Task<TourDetailsViewModel?> GetTourDetailsAsync(int tourId);
+
 
         // ============================================================
-        // WRITE OPERATIONS (CURRENT PHASE)
+        // PUBLISH
         // ============================================================
 
-        // Creates a tour with ONLY core fields (no images, no addons)
-        Task<int> CreateTourAsync(Tour tour);
+        // Publishes a completed draft and creates a new live tour.
+        Task<int> PublishTourAsync(
+            int draftId,
+            int adminId);
 
-        // Attaches images to an existing tour
-        Task AddTourImagesAsync(
+
+        // ============================================================
+        // EDIT EXISTING TOUR
+        // ============================================================
+
+        // Gets an existing active edit draft or creates one from
+        // the live tour when no active draft exists.
+        Task<int> GetOrCreateEditDraftAsync(
             int tourId,
-            List<int> imageIds,
-            int coverImageId
-        );
+            int adminId);
 
-        // ============================================================
-        // LEGACY / TEMPORARY (COMMENTED — DO NOT USE)
-        // ============================================================
+        // Applies a completed edit draft to the existing live tour.
+        Task UpdateTourFromDraftAsync(
+            int draftId,
+            int adminId);
 
-        /*
-        Task<int> AddTourAsync(
-            int locationId,
-            string tourTitle,
-            string? duration,
-            decimal basePrice,
-            string? overview,
-            List<int> imageIds,
-            int coverImageId
-        );
-        */
-
-        //Task UpdateTourAsync(UpdateTourDto dto);
         Task DeleteTourAsync(int tourId);
-        Task<int> PublishTourAsync(int draftId, int adminId);
-        Task<int> GetOrCreateEditDraftAsync(int tourId, int adminId);
-        Task UpdateTourFromDraftAsync(int draftId, int adminId);
+
     }
 }

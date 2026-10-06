@@ -19,3 +19,5 @@ appsettings.Development.json
 
 repomix-output.xml
 Documentation
+
+database/

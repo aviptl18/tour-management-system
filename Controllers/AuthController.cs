@@ -51,7 +51,7 @@ namespace Tour_Module.Controllers
                 return RedirectToAction("Index", "Tours", new { area = "Admin" });
             }
 
-            return RedirectToAction("Index", "Tours");
+            return RedirectToAction("Index", "UserTour");
         }
 
         // Register Get

@@ -1,53 +1,45 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Tour_Module.DTOs.Tours;
-using Tour_Module.Models.Entities;
+﻿using Tour_Module.DTOs.Tours;
 using Tour_Module.ViewModels.Admin.Tours;
 
 namespace Tour_Module.Repository.Interfaces
 {
     public interface ITourRepository
     {
-        // ============================================================
-        // READ OPERATIONS
-        // ============================================================
+        // =========================================================
+        // READ
+        // =========================================================
 
-        // Admin: fetch all tours for index page
-        Task<IEnumerable<TourDto>> GetAllToursAsync();
+        Task<List<TourDto>> GetAllAsync();
 
-        // Admin: fetch full tour details (READ MODEL)
-        Task<AdminTourDetailVM?> GetAdminTourDetailsAsync(int tourId);
+        Task<TourDetailsViewModel?> GetDetailsAsync(int tourId);
 
-        // ============================================================
-        // WRITE OPERATIONS
-        // ============================================================
 
-        // Create tour (core data only)
-        Task<int> AddTourAsync(
-            int locationId,
-            string tourTitle,
-            string? duration,
-            decimal basePrice,
-            string? overview
-        );
+        // =========================================================
+        // PUBLISH
+        // =========================================================
 
-        // Attach images to tour
-        Task InsertTourImageAsync(
+        Task<int> PublishFromDraftAsync(
+            int draftId,
+            int adminId);
+
+
+        // =========================================================
+        // EDIT EXISTING TOUR
+        // =========================================================
+
+        Task<int?> GetActiveDraftIdAsync(
+            int tourId);
+
+        Task<int> CreateDraftFromTourAsync(
             int tourId,
-            int imageId,
-            bool isCoverImage
-        );
+            int adminId);
 
-        // Update core tour fields (legacy – refactor later)
-        Task UpdateTourAsync(Tour tour);
+        Task UpdateFromDraftAsync(
+            int draftId,
+            int adminId);
 
-        // Delete / deactivate tour
-        Task DeleteTourAsync(int tourId);
+        // Delete
 
-        Task<int> PublishTourAsync(int draftId, int tourId);
-        Task<int?> GetActiveDraftForTourAsync(int tourId);
-        Task<int> CreateTourDraftFromLiveAsync(int tourId, int adminId);
-        Task UpdateTourFromDraftAsync(int draftId, int adminId);
-
+        Task DeleteAsync(int tourId);
     }
 }

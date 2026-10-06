@@ -1,182 +1,142 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Tour_Module.DTOs.Tours;
-using Tour_Module.Models.Entities;
 using Tour_Module.Repository.Interfaces;
 using Tour_Module.Services.Interfaces;
-using Tour_Module.Data;
 using Tour_Module.ViewModels.Admin.Tours;
-
 
 namespace Tour_Module.Services.Implementations
 {
     public class TourService : ITourService
     {
         private readonly ITourRepository _tourRepository;
-        private readonly ApplicationDbContext _context;
 
-        public TourService(
-            ITourRepository tourRepository,
-            ApplicationDbContext context)
+        public TourService(ITourRepository tourRepository)
         {
             _tourRepository = tourRepository
                 ?? throw new ArgumentNullException(nameof(tourRepository));
-
-            _context = context
-                ?? throw new ArgumentNullException(nameof(context));
         }
 
         // ============================================================
         // READ — GET ALL TOURS
         // Purpose:
-        //   - Used by admin tour listing
+        //   - Returns all tours for the admin tour listing page.
         // ============================================================
+
         public async Task<IEnumerable<TourDto>> GetAllToursAsync()
         {
-            return await _tourRepository.GetAllToursAsync();
+            return await _tourRepository.GetAllAsync();
         }
+
 
         // ============================================================
         // READ — GET TOUR DETAILS
         // Purpose:
-        //   - Used by admin tour details page
+        //   - Returns details of one existing tour.
         // ============================================================
-        public async Task<AdminTourDetailVM?> GetAdminTourDetailAsync(int tourId)
+
+        public async Task<TourDetailsViewModel?> GetTourDetailsAsync(
+            int tourId)
         {
             if (tourId <= 0)
                 return null;
 
-            return await _tourRepository.GetAdminTourDetailsAsync(tourId);
+            return await _tourRepository.GetDetailsAsync(tourId);
         }
 
+
         // ============================================================
-        // WRITE — CREATE TOUR (CORE DATA ONLY)
+        // PUBLISH — CREATE LIVE TOUR FROM COMPLETED DRAFT
         // Purpose:
-        //   - Creates Tour row only
-        //   - No images
-        //   - No addons
+        //   - Publishes a completed draft.
+        //   - Creates a new live tour.
+        //   - Returns the newly created TourId.
         // ============================================================
-        public async Task<int> CreateTourAsync(Tour tour)
+
+        public async Task<int> PublishTourAsync(
+            int draftId,
+            int adminId)
         {
-            if (tour == null)
-                throw new ArgumentNullException(nameof(tour));
+            if (draftId <= 0)
+                throw new InvalidOperationException(
+                    "Invalid draft.");
 
-            if (string.IsNullOrWhiteSpace(tour.TourTitle))
-                throw new InvalidOperationException("Tour title is required.");
+            if (adminId <= 0)
+                throw new InvalidOperationException(
+                    "Invalid admin.");
 
-            if (tour.LocationId <= 0)
-                throw new InvalidOperationException("Location is required.");
-
-            if (tour.BasePrice == null || tour.BasePrice <= 0)
-                throw new InvalidOperationException("Base price must be greater than zero.");
-
-            return await _tourRepository.AddTourAsync(
-                tour.LocationId,
-                tour.TourTitle,
-                tour.Duration,
-                tour.BasePrice.Value,
-                tour.Overview
-            );
+            return await _tourRepository.PublishFromDraftAsync(
+                draftId,
+                adminId);
         }
 
+
         // ============================================================
-        // WRITE — ADD TOUR IMAGES
+        // EDIT — GET OR CREATE EDIT DRAFT
         // Purpose:
-        //   - Attaches selected images to an existing tour
-        //   - Sets cover image explicitly
+        //   - Checks whether an active edit draft already exists.
+        //   - Returns the existing draft when found.
+        //   - Creates a new draft from the live tour otherwise.
         // ============================================================
-        public async Task AddTourImagesAsync(
+
+        public async Task<int> GetOrCreateEditDraftAsync(
             int tourId,
-            List<int> imageIds,
-            int coverImageId)
+            int adminId)
         {
             if (tourId <= 0)
-                throw new InvalidOperationException("Invalid tour.");
+                throw new InvalidOperationException(
+                    "Invalid tour.");
 
-            if (imageIds == null || !imageIds.Any())
-                throw new InvalidOperationException("At least one image must be selected.");
+            if (adminId <= 0)
+                throw new InvalidOperationException(
+                    "Invalid admin.");
 
-            if (!imageIds.Contains(coverImageId))
-                throw new InvalidOperationException("Cover image must be part of selected images.");
-
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                foreach (var imageId in imageIds.Distinct())
-                {
-                    await _tourRepository.InsertTourImageAsync(
-                        tourId,
-                        imageId,
-                        imageId == coverImageId
-                    );
-                }
-
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        }
-
-        // ============================================================
-        // LEGACY — UPDATE (WILL BE REFACTORED LATER)
-        // ============================================================
-        //public async Task UpdateTourAsync(UpdateTourDto dto)
-        //{
-        //    if (dto == null)
-        //        throw new ArgumentNullException(nameof(dto));
-
-        //    var tour = new Tour
-        //    {
-        //        TourId = dto.TourId,
-        //        LocationId = dto.LocationId,
-        //        TourTitle = dto.TourTitle,
-        //        Duration = dto.Duration,
-        //        Price = dto.Price,
-        //        Overview = dto.Overview,
-        //        ImageUrl = dto.ImageUrl
-        //    };
-
-        //    await _tourRepository.UpdateTourAsync(tour);
-        //}
-
-        // ============================================================
-        // LEGACY — DELETE
-        // ============================================================
-        public async Task DeleteTourAsync(int tourId)
-        {
-            await _tourRepository.DeleteTourAsync(tourId);
-        }
-
-        // PUBLISH
-
-        public async Task<int> PublishTourAsync(int draftId, int adminId)
-        {
-            return await _tourRepository.PublishTourAsync(draftId, adminId);
-        }
-
-        // Update tour
-
-        public async Task<int> GetOrCreateEditDraftAsync(int tourId, int adminId)
-        {
-            var draftId = await _tourRepository.GetActiveDraftForTourAsync(tourId);
+            var draftId =
+                await _tourRepository.GetActiveDraftIdAsync(
+                    tourId);
 
             if (draftId.HasValue)
                 return draftId.Value;
 
-            return await _tourRepository.CreateTourDraftFromLiveAsync(tourId, adminId);
+            return await _tourRepository.CreateDraftFromTourAsync(
+                tourId,
+                adminId);
         }
 
-        public async Task UpdateTourFromDraftAsync(int draftId, int adminId)
+
+        // ============================================================
+        // EDIT — UPDATE LIVE TOUR FROM COMPLETED DRAFT
+        // Purpose:
+        //   - Applies the completed edit draft to the existing tour.
+        // ============================================================
+
+        public async Task UpdateTourFromDraftAsync(
+            int draftId,
+            int adminId)
         {
-            await _tourRepository.UpdateTourFromDraftAsync(draftId, adminId);
+            if (draftId <= 0)
+                throw new InvalidOperationException(
+                    "Invalid draft.");
+
+            if (adminId <= 0)
+                throw new InvalidOperationException(
+                    "Invalid admin.");
+
+            await _tourRepository.UpdateFromDraftAsync(
+                draftId,
+                adminId);
+        }
+
+        // Delete Tour
+
+        public async Task DeleteTourAsync(int tourId)
+        {
+            if (tourId <= 0)
+                throw new ArgumentException(
+                    "Invalid tour.");
+
+            await _tourRepository.DeleteAsync(tourId);
         }
     }
 }

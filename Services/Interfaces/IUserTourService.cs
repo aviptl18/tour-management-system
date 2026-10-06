@@ -5,6 +5,7 @@ namespace Tour_Module.Services.Interfaces
 {
     public interface IUserTourService
     {
-        Task<UserTourDetailsDto?> GetUserTourDetailsAsync(int tourId);
+        Task<UserTourDetailsDto?> GetUserTourDetailsAsync(
+            int tourId);
     }
 }

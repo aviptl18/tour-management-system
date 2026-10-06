@@ -1,7 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using System.Data;
-using Tour_Module.Data;
 using Tour_Module.Models.Entities;
 using Tour_Module.Repository.Interfaces;
 
@@ -9,171 +7,687 @@ namespace Tour_Module.Repository.Implementations
 {
     public class TourDraftRepository : ITourDraftRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly string _connectionString;
 
-        public TourDraftRepository(ApplicationDbContext context)
+        public TourDraftRepository(string connectionString)
         {
-            _context = context;
+            _connectionString = connectionString;
         }
+
+        // =========================================================
+        // DRAFT LIFECYCLE
+        // =========================================================
 
         public async Task<int> CreateDraftAsync(int adminId)
         {
-            var draftIdParam = new SqlParameter("@DraftId", SqlDbType.Int)
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_Create", con))
             {
-                Direction = ParameterDirection.Output
-            };
+                cmd.CommandType = CommandType.StoredProcedure;
 
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_CreateTourDraft @CreatedByAdminId, @DraftId OUTPUT",
-                new SqlParameter("@CreatedByAdminId", adminId),
-                draftIdParam
-                );
+                cmd.Parameters.Add(
+                    "@CreatedByAdminId",
+                    SqlDbType.Int).Value = adminId;
 
-            return (int)draftIdParam.Value;
+                SqlParameter draftIdParameter = cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int);
+
+                draftIdParameter.Direction =
+                    ParameterDirection.Output;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+
+                return Convert.ToInt32(draftIdParameter.Value);
+            }
         }
 
-        public async Task<TourDraft?> GetDraftByIdAsync(int draftId, int adminId)
+        public async Task<TourDraft?> GetDraftByIdAsync(
+            int draftId,
+            int adminId)
         {
-            var result = await _context.TourDrafts
-                .FromSqlRaw("EXEC dbo.usp_GetTourDraftById @DraftId, @CreatedByAdminId",
-                    new SqlParameter("@DraftId", draftId),
-                    new SqlParameter("@CreatedByAdminId", adminId))
-                .AsNoTracking()
-                .ToListAsync();
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_GetById", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
 
-            return result.FirstOrDefault();
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@CreatedByAdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                using (SqlDataReader reader =
+                    await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        return new TourDraft
+                        {
+                            DraftId = reader.GetInt32(
+                                reader.GetOrdinal("DraftId")),
+
+                            TourTitle = reader.GetString(
+                                reader.GetOrdinal("TourTitle")),
+
+                            Overview = reader.GetString(
+                                reader.GetOrdinal("Overview")),
+
+                            LocationId = reader.IsDBNull(
+                                reader.GetOrdinal("LocationId"))
+                                ? null
+                                : reader.GetInt32(
+                                    reader.GetOrdinal("LocationId")),
+
+                            Duration = reader.IsDBNull(
+                                reader.GetOrdinal("Duration"))
+                                ? null
+                                : reader.GetString(
+                                    reader.GetOrdinal("Duration")),
+
+                            BasePrice = reader.IsDBNull(
+                                reader.GetOrdinal("BasePrice"))
+                                ? null
+                                : reader.GetDecimal(
+                                    reader.GetOrdinal("BasePrice")),
+
+                            DraftStep = reader.GetInt32(
+                                reader.GetOrdinal("DraftStep")),
+
+                            Status = reader.GetString(
+                                reader.GetOrdinal("Status")),
+
+                            OriginalTourId = reader.IsDBNull(
+                                reader.GetOrdinal("OriginalTourId"))
+                                ? null
+                                : reader.GetInt32(
+                                    reader.GetOrdinal("OriginalTourId")),
+
+                            CreatedByAdminId = reader.GetInt32(
+                                reader.GetOrdinal("CreatedByAdminId")),
+
+                            CreatedAt = reader.GetDateTime(
+                                reader.GetOrdinal("CreatedAt")),
+
+                            UpdatedAt = reader.IsDBNull(
+                                reader.GetOrdinal("UpdatedAt"))
+                                ? null
+                                : reader.GetDateTime(
+                                    reader.GetOrdinal("UpdatedAt"))
+                        };
+                    }
+                }
+            }
+
+            return null;
         }
 
-        public async Task UpdateStep1Async(int draftId, int adminId, string title, string overview)
+        // =========================================================
+        // STEP 1 - BASIC INFORMATION
+        // =========================================================
+
+        public async Task UpdateDraftBasicInfoAsync(
+            int draftId,
+            int adminId,
+            string title,
+            string overview)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_UpdateTourDraftStep1 @DraftId, @CreatedByAdminId, @TourTitle, @Overview",
-                    new SqlParameter("@DraftId", draftId),
-                    new SqlParameter("@CreatedByAdminId", adminId),
-                    new SqlParameter("@TourTitle", title),
-                    new SqlParameter("@Overview", overview)
-                );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_UpdateBasicInfo", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@CreatedByAdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                cmd.Parameters.Add(
+                    "@TourTitle",
+                    SqlDbType.NVarChar, 200).Value = title;
+
+                cmd.Parameters.Add(
+                    "@Overview",
+                    SqlDbType.NVarChar, -1).Value = overview;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task UpdateDraftLocationAsync(int draftId, int adminId, int locationId)
+        // =========================================================
+        // STEP 2 - LOCATION
+        // =========================================================
+
+        public async Task UpdateDraftLocationAsync(
+            int draftId,
+            int adminId,
+            int locationId)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_UpdateDraftLocation @DraftId, @AdminId, @LocationId",
-                new SqlParameter("@DraftId", draftId),
-                new SqlParameter("@AdminId", adminId),
-                new SqlParameter("@LocationId", locationId)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_UpdateLocation", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                cmd.Parameters.Add(
+                    "@LocationId",
+                    SqlDbType.Int).Value = locationId;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task DeleteDraftImagesAsync(int draftId)
+        // =========================================================
+        // STEP 2 - IMAGES
+        // =========================================================
+
+        public async Task DeleteAllDraftImagesAsync(
+            int draftId,
+            int adminId)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_DeleteDraftImages @DraftId",
-                new SqlParameter("@DraftId", draftId)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftImage_DeleteAll", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task AddDraftImageAsync(int draftId, int locationImageId, bool isCover)
+        public async Task AddDraftImageAsync(
+            int draftId,
+            int adminId,
+            int locationImageId,
+            bool isCover)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_AddDraftImage @DraftId, @LocationImageId, @IsCover",
-                new SqlParameter("@DraftId", draftId),
-                new SqlParameter("@LocationImageId", locationImageId),
-                new SqlParameter("@IsCover", isCover));
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftImage_Add", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                cmd.Parameters.Add(
+                    "@LocationImageId",
+                    SqlDbType.Int).Value = locationImageId;
+
+                cmd.Parameters.Add(
+                    "@IsCover",
+                    SqlDbType.Bit).Value = isCover;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task<List<TourDraftImage>> GetDraftImagesAsync(int draftId)
+        public async Task<List<TourDraftImage>> GetDraftImagesAsync(
+            int draftId,
+            int adminId)
         {
-            return await _context.TourDraftImages
-                .FromSqlRaw("EXEC dbo.usp_GetDraftImages @DraftId",
-                    new SqlParameter("@DraftId", draftId))
-                .AsNoTracking()
-                .ToListAsync();
+            var images = new List<TourDraftImage>();
+
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftImage_Get", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                using (SqlDataReader reader =
+                    await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        images.Add(new TourDraftImage
+                        {
+                            DraftImageId = reader.GetInt32(
+                                reader.GetOrdinal("DraftImageId")),
+
+                            DraftId = reader.GetInt32(
+                                reader.GetOrdinal("DraftId")),
+
+                            LocationImageId = reader.GetInt32(
+                                reader.GetOrdinal("LocationImageId")),
+
+                            IsCover = reader.GetBoolean(
+                                reader.GetOrdinal("IsCover")),
+
+                            CreatedAt = reader.GetDateTime(
+                                reader.GetOrdinal("CreatedAt"))
+                        });
+                    }
+                }
+            }
+
+            return images;
         }
 
-        public async Task EnsureBaseComponentAsync(int draftId)
+        // =========================================================
+        // STEP 3 - PRICING
+        // =========================================================
+
+        public async Task EnsureBasePricingComponentAsync(
+            int draftId,
+            int adminId)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_EnsureBaseComponent @DraftId",
-                new SqlParameter("@DraftId", draftId)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftPricing_EnsureBase", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task<List<TourDraftPricingComponent>> GetPricingComponentsAsync(int draftId)
+        public async Task<List<TourDraftPricingComponent>>
+            GetDraftPricingComponentsAsync(
+                int draftId,
+                int adminId)
         {
-            var result = await _context.TourDraftPricingComponents
-                .FromSqlRaw(
-                    "EXEC dbo.usp_GetDraftPricingComponents @DraftId",
-                    new SqlParameter("@DraftId", draftId))
-                .AsNoTracking()
-                .ToListAsync();
+            var components =
+                new List<TourDraftPricingComponent>();
 
-            return result;
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftPricing_Get", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                using (SqlDataReader reader =
+                    await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        components.Add(
+                            new TourDraftPricingComponent
+                            {
+                                PricingComponentId =
+                                    reader.GetInt32(
+                                        reader.GetOrdinal(
+                                            "PricingComponentId")),
+
+                                DraftId =
+                                    reader.GetInt32(
+                                        reader.GetOrdinal(
+                                            "DraftId")),
+
+                                OptionId =
+                                    reader.IsDBNull(
+                                        reader.GetOrdinal(
+                                            "OptionId"))
+                                    ? null
+                                    : reader.GetInt32(
+                                        reader.GetOrdinal(
+                                            "OptionId")),
+
+                                ComponentName =
+                                    reader.GetString(
+                                        reader.GetOrdinal(
+                                            "ComponentName")),
+
+                                Price =
+                                    reader.GetDecimal(
+                                        reader.GetOrdinal(
+                                            "Price")),
+
+                                IsBaseComponent =
+                                    reader.GetBoolean(
+                                        reader.GetOrdinal(
+                                            "IsBaseComponent")),
+
+                                CreatedAt =
+                                    reader.GetDateTime(
+                                        reader.GetOrdinal(
+                                            "CreatedAt"))
+                            });
+                    }
+                }
+            }
+
+            return components;
         }
 
-        //public async Task<TourDraftPricingComponent?> GetComponentByIdAsync(int componentId)
-        //{
-        //    return await _context.TourDraftPricingComponents
-        //        .FirstOrDefaultAsync(c => c.PricingComponentId == componentId);
-        //}
-
-        public async Task AddPricingComponentAsync(int draftId, int optionId, string componentName, decimal price, bool isBaseComponent)
+        public async Task AddDraftPricingComponentAsync(
+            int draftId,
+            int adminId,
+            int optionId,
+            string componentName,
+            decimal price)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_AddDraftPricingComponent @DraftId, @OptionId, @ComponentName, @Price, @IsBaseComponent",
-                new SqlParameter("@DraftId", draftId),
-                new SqlParameter("@OptionId", optionId),
-                new SqlParameter("@ComponentName", componentName),
-                new SqlParameter("@Price", price),
-                new SqlParameter("@IsBaseComponent", isBaseComponent)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftPricing_Add", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                cmd.Parameters.Add(
+                    "@OptionId",
+                    SqlDbType.Int).Value = optionId;
+
+                cmd.Parameters.Add(
+                    "@ComponentName",
+                    SqlDbType.NVarChar, 150).Value =
+                    componentName;
+
+                var priceParameter = cmd.Parameters.Add(
+                    "@Price",
+                    SqlDbType.Decimal);
+
+                priceParameter.Precision = 10;
+                priceParameter.Scale = 2;
+                priceParameter.Value = price;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task RemovePricingComponentAsync(int componentId)
+        public async Task RemoveDraftPricingComponentAsync(
+            int pricingComponentId,
+            int adminId)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_RemoveDraftPricingComponent @PricingComponentId",
-                new SqlParameter("@PricingComponentId", componentId)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraftPricing_Remove", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@PricingComponentId",
+                    SqlDbType.Int).Value =
+                    pricingComponentId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task UpdateComponentPriceAsync(int componentId, decimal price)
+        public async Task UpdateDraftBasePriceAsync(
+            int draftId,
+            int adminId,
+            int pricingComponentId,
+            decimal price)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_UpdateDraftPricingComponentPrice @ComponentId, @Price",
-                new SqlParameter("@ComponentId", componentId),
-                new SqlParameter("@Price", price)
-            );
+            using (SqlConnection con =
+                new SqlConnection(_connectionString))
+            using (SqlCommand cmd =
+                new SqlCommand(
+                    "usp_TourDraftPricing_UpdateBasePrice",
+                    con))
+            {
+                cmd.CommandType =
+                    CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value =
+                    draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value =
+                    adminId;
+
+                cmd.Parameters.Add(
+                    "@ComponentId",
+                    SqlDbType.Int).Value =
+                    pricingComponentId;
+
+                var priceParameter = cmd.Parameters.Add(
+                    "@Price",
+                    SqlDbType.Decimal);
+
+                priceParameter.Precision = 10;
+                priceParameter.Scale = 2;
+                priceParameter.Value = price;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task SetDraftStepAsync(int draftId, int step)
+        // =========================================================
+        // DRAFT PROGRESS
+        // =========================================================
+
+        public async Task SetDraftStepAsync(
+            int draftId,
+            int adminId,
+            int step)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_SetDraftStep @DraftId, @Step",
-                new SqlParameter("@DraftId", draftId),
-                new SqlParameter("@Step", step)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_SetStep", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                cmd.Parameters.Add(
+                    "@Step",
+                    SqlDbType.Int).Value = step;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task UpdateStep3Async(int draftId, string duration)
+        public async Task UpdateDraftDurationAsync(
+            int draftId,
+            int adminId,
+            string duration)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC dbo.usp_UpdateTourDraftStep3 @DraftId, @Duration",
-                new SqlParameter("@DraftId", draftId),
-                new SqlParameter("@Duration", duration ?? (object)DBNull.Value)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_UpdateDuration", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                cmd.Parameters.Add(
+                    "@Duration",
+                    SqlDbType.NVarChar, 100).Value =
+                    duration;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
-        public async Task UpdateDraftStatusAsync(int draftId, string status)
+        // =========================================================
+        // DRAFT STATUS
+        // =========================================================
+
+        public async Task UpdateDraftStatusAsync(
+            int draftId,
+            string status)
         {
-            await _context.Database.ExecuteSqlRawAsync(
-                "EXEC usp_UpdateDraftStatus @DraftId, @Status",
-                new SqlParameter("@DraftId", draftId),
-                new SqlParameter("@Status", status)
-            );
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_UpdateStatus", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int).Value = draftId;
+
+                cmd.Parameters.Add(
+                    "@Status",
+                    SqlDbType.NVarChar, 20).Value = status;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
+        // =========================================================
+        // EDIT EXISTING TOUR
+        // =========================================================
 
+        public async Task<int?> GetActiveDraftForTourAsync(
+            int tourId)
+        {
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_GetActiveForTour", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
 
+                cmd.Parameters.Add(
+                    "@TourId",
+                    SqlDbType.Int).Value = tourId;
+
+                await con.OpenAsync();
+
+                object? result =
+                    await cmd.ExecuteScalarAsync();
+
+                if (result == null || result == DBNull.Value)
+                {
+                    return null;
+                }
+
+                return Convert.ToInt32(result);
+            }
+        }
+
+        public async Task<int> CreateDraftFromTourAsync(
+            int tourId,
+            int adminId)
+        {
+            using (SqlConnection con = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(
+                "usp_TourDraft_CreateFromTour", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add(
+                    "@TourId",
+                    SqlDbType.Int).Value = tourId;
+
+                cmd.Parameters.Add(
+                    "@AdminId",
+                    SqlDbType.Int).Value = adminId;
+
+                SqlParameter draftIdParameter = cmd.Parameters.Add(
+                    "@DraftId",
+                    SqlDbType.Int);
+
+                draftIdParameter.Direction =
+                    ParameterDirection.Output;
+
+                await con.OpenAsync();
+
+                await cmd.ExecuteNonQueryAsync();
+
+                return Convert.ToInt32(
+                    draftIdParameter.Value);
+            }
+        }
     }
 }

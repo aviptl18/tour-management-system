@@ -2,7 +2,7 @@
 
 namespace Tour_Module.Models.Entities
 {
-    public class TourImages
+    public class TourImage
     {
         public int TourImageId { get; set; }
         public int TourId { get; set; }

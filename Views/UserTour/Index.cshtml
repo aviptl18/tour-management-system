@@ -24,13 +24,13 @@
                     <div class="card shadow-sm border-0 h-100">
 
                         <!-- IMAGE -->
-                        <a asp-controller="Tours"
+                        <a asp-controller="UserTour"
                            asp-action="Details"
                            asp-route-id="@tour.TourId">
 
                             <img src="@(string.IsNullOrEmpty(tour.CoverImageUrl)
-                                                                          ? "/images/placeholder.jpg"
-                                                                          : tour.CoverImageUrl)"
+                                                                       ? "/images/placeholder.jpg"
+                                                                       : tour.CoverImageUrl)"
                          class="card-img-top"
                          style="height:200px; object-fit:cover;"
                          alt="@tour.TourTitle" />
@@ -40,7 +40,7 @@
 
                             <!-- TITLE -->
                             <h5 class="card-title fw-bold mb-1">
-                                <a asp-controller="Tours"
+                                <a asp-controller="UserTour"
                                    asp-action="Details"
                                    asp-route-id="@tour.TourId"
                                    class="text-decoration-none text-dark">
@@ -54,19 +54,23 @@
                             </p>
 
                             <!-- OVERVIEW -->
-                            @* <p class="small text-muted flex-grow-1"
+                            @* 
+                            <p class="small text-muted flex-grow-1"
                                style="overflow:hidden; text-overflow:ellipsis;">
                                 @tour.Overview
-                            </p> *@
+                            </p> 
+                            *@
 
                             <!-- PRICE -->
                             <p class="fw-semibold text-success mb-2">
-                                Starting from <strong>₹@((tour.TotalPrice ?? 0).ToString("N2"))</strong>
+                                Starting from
+                                <strong>
+                                    ₹@((tour.TotalPrice ?? 0).ToString("N2"))
+                                </strong>
                             </p>
 
-
                             <!-- CTA -->
-                            <a asp-controller="Tours"
+                            <a asp-controller="UserTour"
                                asp-action="Details"
                                asp-route-id="@tour.TourId"
                                class="btn btn-outline-primary btn-sm">

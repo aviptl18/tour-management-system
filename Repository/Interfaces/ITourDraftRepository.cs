@@ -4,22 +4,98 @@ namespace Tour_Module.Repository.Interfaces
 {
     public interface ITourDraftRepository
     {
-        Task<int> CreateDraftAsync(int adminId);
-        Task<TourDraft?> GetDraftByIdAsync(int draftId, int adminId);
-        Task UpdateStep1Async(int draftId, int adminId, string title, string overview);
-        Task UpdateDraftLocationAsync(int draftId, int adminId, int locationId);
-        Task DeleteDraftImagesAsync(int draftId);
-        Task AddDraftImageAsync(int draftId, int locationImageId, bool isCover);
-        Task<List<TourDraftImage>> GetDraftImagesAsync(int draftId);
-        Task EnsureBaseComponentAsync(int draftId);
-        Task<List<TourDraftPricingComponent>> GetPricingComponentsAsync(int draftId);
-        //Task<TourDraftPricingComponent?> GetComponentByIdAsync(int componentId);
-        Task AddPricingComponentAsync(int draftId, int optionId, string componentName, decimal price, bool isBaseComponent);
-        Task RemovePricingComponentAsync(int componentId);
-        Task UpdateComponentPriceAsync(int componentId, decimal price);
-        Task SetDraftStepAsync(int draftId, int step);
-        Task UpdateStep3Async(int draftId, string duration);
-        Task UpdateDraftStatusAsync(int draftId, string status);   
-    }
+        // DRAFT LIFECYCLE
 
+        Task<int> CreateDraftAsync(int adminId);
+
+        Task<TourDraft?> GetDraftByIdAsync(
+            int draftId,
+            int adminId);
+
+        // STEP 1 - BASIC INFORMATION
+
+        Task UpdateDraftBasicInfoAsync(
+            int draftId,
+            int adminId,
+            string title,
+            string overview);
+
+        // STEP 2 - LOCATION
+
+        Task UpdateDraftLocationAsync(
+            int draftId,
+            int adminId,
+            int locationId);
+
+        // STEP 2 - IMAGES
+
+        Task DeleteAllDraftImagesAsync(
+            int draftId,
+            int adminId);
+
+        Task AddDraftImageAsync(
+            int draftId,
+            int adminId,
+            int locationImageId,
+            bool isCover);
+
+        Task<List<TourDraftImage>> GetDraftImagesAsync(
+            int draftId,
+            int adminId);
+
+        // STEP 3 - PRICING
+
+        Task EnsureBasePricingComponentAsync(
+            int draftId,
+            int adminId);
+
+        Task<List<TourDraftPricingComponent>>
+            GetDraftPricingComponentsAsync(
+                int draftId,
+                int adminId);
+
+        Task AddDraftPricingComponentAsync(
+            int draftId,
+            int adminId,
+            int optionId,
+            string componentName,
+            decimal price);
+
+        Task RemoveDraftPricingComponentAsync(
+            int pricingComponentId,
+            int adminId);
+
+        Task UpdateDraftBasePriceAsync(
+            int draftId,
+            int adminId,
+            int pricingComponentId,
+            decimal price);
+
+        // DRAFT PROGRESS
+
+        Task SetDraftStepAsync(
+            int draftId,
+            int adminId,
+            int step);
+
+        Task UpdateDraftDurationAsync(
+            int draftId,
+            int adminId,
+            string duration);
+
+        // DRAFT STATUS
+
+        Task UpdateDraftStatusAsync(
+            int draftId,
+            string status);
+
+        // EDIT EXISTING TOUR
+
+        Task<int?> GetActiveDraftForTourAsync(
+            int tourId);
+
+        Task<int> CreateDraftFromTourAsync(
+            int tourId,
+            int adminId);
+    }
 }

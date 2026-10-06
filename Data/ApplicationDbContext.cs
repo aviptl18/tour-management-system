@@ -19,7 +19,7 @@ namespace Tour_Module.Data
         public DbSet<Location> Locations { get; set; }
         public DbSet<Tour> Tours { get; set; }
         public DbSet<LocationImage> LocationImages { get; set; }
-        public DbSet<TourImages> TourImages { get; set; }
+        public DbSet<TourImage> TourImages { get; set; }
         public DbSet<TourAddOn> TourAddOns { get; set; }
         public DbSet<TourDraft> TourDrafts { get; set; }
         public DbSet<TourDraftImage> TourDraftImages { get; set; }
@@ -57,7 +57,7 @@ namespace Tour_Module.Data
             // ENTITY CONFIGURATIONS
             // ------------------------------------------------------------
 
-            modelBuilder.Entity<TourImages>()
+            modelBuilder.Entity<TourImage>()
                 .HasKey(ti => ti.TourImageId);
 
             // ------------------------------------------------------------

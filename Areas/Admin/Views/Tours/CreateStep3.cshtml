@@ -1,12 +1,13 @@
-﻿@using Tour_Module.DTOs.Tours.View
-@model CreateTourStep3ViewDto
+﻿@model Tour_Module.ViewModels.Admin.Tours.CreateStep3ViewModel
 
 @{
     ViewData["Title"] = "Add New Tour";
     ViewData["Subtitle"] = "Step 3 of 3 — Pricing & Duration";
 
     var baseItem = Model.Components.FirstOrDefault(x => x.IsBaseComponent);
-    var basePriceValue = baseItem?.Price > 0 ? baseItem.Price.ToString() : "";
+    var basePriceValue = baseItem?.Price > 0
+        ? baseItem.Price.ToString()
+        : "";
 
     bool isEditMode = Model.OriginalTourId != null;
 }
@@ -24,34 +25,46 @@
 
     <!-- STEP INDICATOR -->
     <div class="tour-stepper">
+
         <div class="step">
             <div class="step-circle">1</div>
             <div class="step-label">Basic Info</div>
         </div>
+
         <div class="step-line"></div>
+
         <div class="step">
             <div class="step-circle">2</div>
             <div class="step-label">Media</div>
         </div>
+
         <div class="step-line"></div>
+
         <div class="step active">
             <div class="step-circle">3</div>
             <div class="step-label">Pricing</div>
         </div>
+
     </div>
 
     <!-- FORM -->
     <form method="post" asp-action="CompleteStep3">
+
         @Html.AntiForgeryToken()
 
-        <input type="hidden" asp-for="DraftId" id="DraftId" />
+        <input type="hidden"
+               asp-for="DraftId"
+               id="DraftId" />
+
         @if (Model.OriginalTourId != null)
         {
-            <input type="hidden" asp-for="OriginalTourId" />
+            <input type="hidden"
+                   asp-for="OriginalTourId" />
         }
 
-        <!-- Duration -->
+        <!-- DURATION -->
         <div class="mb-4">
+
             <label class="form-label">
                 Duration <span class="text-danger">*</span>
             </label>
@@ -60,13 +73,16 @@
                    class="form-control shadow-sm"
                    placeholder="Enter duration" />
 
-            <span asp-validation-for="Duration" class="text-danger"></span>
+            <span asp-validation-for="Duration"
+                  class="text-danger"></span>
+
         </div>
 
-        <!-- Base Price -->
+        <!-- BASE PRICE -->
         <div class="mb-4">
 
             <div class="d-flex justify-content-between align-items-center mb-2">
+
                 <label class="form-label m-0">
                     Base Price (₹) <span class="text-danger">*</span>
                 </label>
@@ -76,6 +92,7 @@
                         class="btn btn-sm btn-outline-primary">
                     +
                 </button>
+
             </div>
 
             <input type="number"
@@ -87,16 +104,22 @@
                    data-id="@(baseItem?.PricingComponentId)"
                    placeholder="Enter base price" />
 
-            <span id="basePriceError" class="text-danger"></span>
+            <span id="basePriceError"
+                  class="text-danger"></span>
 
             <div class="form-text">
                 Base price is the minimum tour cost.
             </div>
+
         </div>
 
         <!-- INCLUDED OPTIONS -->
         <div id="pricingContainer">
-            @await Html.PartialAsync("_PricingComponentsPartial", Model.Components)
+
+            @await Html.PartialAsync(
+            "_PricingComponentsPartial",
+                        Model.Components)
+
         </div>
 
         <!-- BUTTONS -->
@@ -110,7 +133,8 @@
 
             <div class="d-flex gap-2">
 
-                <button type="submit" class="btn btn-primary">
+                <button type="submit"
+                        class="btn btn-primary">
                     Save
                 </button>
 
@@ -123,26 +147,33 @@
                 @if (!isEditMode)
                 {
                     <button type="submit"
-                            formaction="@Url.Action("PublishTour", "Tours", new { area = "Admin" })"
-                            class="btn btn-success"
-                            id="publishBtn"
-                            disabled>
-                        Add Tour
-                    </button>
-                }
+                            formaction="@Url.Action(
+                                                            "PublishTour",
+                                                            "Tours",
+                                                            new { area = "Admin" })"
+                        class="btn btn-success"
+                        id="publishBtn"
+                        disabled>
+                    Add Tour
+                </button>
+                                }
                 else
                 {
                     <button type="submit"
-                            formaction="@Url.Action("UpdateTour", "Tours", new { area = "Admin" })"
-                            class="btn btn-success"
-                            id="updateBtn"
-                            disabled>
-                        Update Tour
-                    </button>
-                }
+                            formaction="@Url.Action(
+                                                            "UpdateTour",
+                                                            "Tours",
+                                                            new { area = "Admin" })"
+                        class="btn btn-success"
+                        id="updateBtn"
+                        disabled>
+                    Update Tour
+                </button>
+                                }
 
             </div>
         </div>
+
     </form>
 </div>
 
@@ -157,15 +188,26 @@
         window.draftStatus = "@Model.Status";
         window.isEditMode = @isEditMode.ToString().ToLower();
 
-        if (draftStatus === "Complete" || draftStatus === "Updated") {
+        if (draftStatus === "Complete" ||
+            draftStatus === "Updated") {
 
             if (isEditMode) {
-                const updateBtn = document.getElementById("updateBtn");
-                if (updateBtn) updateBtn.disabled = false;
+
+                const updateBtn =
+                    document.getElementById("updateBtn");
+
+                if (updateBtn)
+                    updateBtn.disabled = false;
+
             }
             else {
-                const publishBtn = document.getElementById("publishBtn");
-                if (publishBtn) publishBtn.disabled = false;
+
+                const publishBtn =
+                    document.getElementById("publishBtn");
+
+                if (publishBtn)
+                    publishBtn.disabled = false;
+
             }
         }
 

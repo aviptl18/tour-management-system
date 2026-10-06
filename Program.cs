@@ -6,41 +6,51 @@ using Tour_Module.Services.Implementations;
 using Tour_Module.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext
+// ============================================================
+// DATABASE
+// ============================================================
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repositories
+// ============================================================
+// REPOSITORIES
+// ============================================================
 
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
-builder.Services.AddScoped<ITourRepository, TourRepository>();
+builder.Services.AddScoped<ITourRepository>(
+    _ => new TourRepository(
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 builder.Services.AddScoped<ILocationImageRepository, LocationImageRepository>();
 
 builder.Services.AddScoped<IAuthRepository>(
     _ => new AuthRepository(
-        builder.Configuration.GetConnectionString("DefaultConnection")!
-    ));
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 builder.Services.AddScoped<IOptionRepository>(
     _ => new OptionRepository(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 builder.Services.AddScoped<ITourAddOnRepository>(
     _ => new TourAddOnRepository(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-builder.Services.AddScoped<IUserTourRepository, UserTourRepository>();
+builder.Services.AddScoped<IUserTourRepository>(
+    _ => new UserTourRepository(
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-builder.Services.AddScoped<ITourDraftRepository, TourDraftRepository>();
+builder.Services.AddScoped<ITourDraftRepository>(
+    _ => new TourDraftRepository(
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-
-// Services
+// ============================================================
+// SERVICES
+// ============================================================
 
 builder.Services.AddScoped<ILocationService, LocationService>();
 
@@ -60,18 +70,18 @@ builder.Services.AddScoped<IUserTourIndexService, UserTourIndexService>();
 
 builder.Services.AddScoped<ITourDraftService, TourDraftService>();
 
+// ============================================================
+// MVC
+// ============================================================
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
+// ============================================================
+// AUTHENTICATION
+// ============================================================
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(
+    CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
@@ -80,7 +90,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
         options.Cookie.Name = "TourApp.Auth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy =
+            CookieSecurePolicy.SameAsRequest;
+
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
     });
@@ -89,36 +101,41 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ============================================================
+// HTTP REQUEST PIPELINE
+// ============================================================
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
-
-app.UseSession();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+// ============================================================
+// AREA ROUTE
+// ============================================================
 
-//  AREA ROUTE (MUST COME FIRST)
 app.MapControllerRoute(
     name: "areas",
-    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}"
-);
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
+// ============================================================
+// DEFAULT ROUTE
+// ============================================================
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Tours}/{action=Index}/{id?}");
+    pattern: "{controller=UserTour}/{action=Index}/{id?}");
 
 app.Run();
-
-// NEED TO REMOVE SESSION MIDDLEWARE
