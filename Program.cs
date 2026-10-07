@@ -40,12 +40,12 @@ builder.Services.AddScoped<ITourAddOnRepository>(
     _ => new TourAddOnRepository(
         builder.Configuration.GetConnectionString("DefaultConnection")!));
 
-builder.Services.AddScoped<IUserTourRepository>(
-    _ => new UserTourRepository(
-        builder.Configuration.GetConnectionString("DefaultConnection")!));
-
 builder.Services.AddScoped<ITourDraftRepository>(
     _ => new TourDraftRepository(
+        builder.Configuration.GetConnectionString("DefaultConnection")!));
+
+builder.Services.AddScoped<ITourDiscoveryRepository>(
+    _ => new TourDiscoveryRepository(
         builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 // ============================================================
@@ -64,11 +64,9 @@ builder.Services.AddScoped<IOptionService, OptionService>();
 
 builder.Services.AddScoped<ITourAddOnService, TourAddOnService>();
 
-builder.Services.AddScoped<IUserTourService, UserTourService>();
-
-builder.Services.AddScoped<IUserTourIndexService, UserTourIndexService>();
-
 builder.Services.AddScoped<ITourDraftService, TourDraftService>();
+
+builder.Services.AddScoped<ITourDiscoveryService, TourDiscoveryService>();
 
 // ============================================================
 // MVC
@@ -136,6 +134,6 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=UserTour}/{action=Index}/{id?}");
+    pattern: "{controller=TourDiscovery}/{action=Index}/{id?}");
 
 app.Run();
