@@ -1,0 +1,143 @@
+﻿@model Tour_Module.ViewModels.Authentication.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="authentication-page">
+    <div class="authentication-card">
+
+        <div class="authentication-header">
+            <div class="authentication-icon">
+                <i class="bi bi-person-lock"></i>
+            </div>
+
+            <h2>Welcome Back</h2>
+
+            <p>
+                Sign in to continue to your account
+            </p>
+        </div>
+
+        <form asp-action="Login" method="post">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <!-- Email -->
+            <div class="form-group-custom">
+                <label asp-for="Email" class="form-label">
+                    Email Address
+                </label>
+
+                <div class="input-wrapper">
+                    <i class="bi bi-envelope input-icon"></i>
+
+                    <input asp-for="Email"
+                           class="form-control-custom"
+                           placeholder="Enter your email"
+                           autocomplete="email" />
+                </div>
+
+                <span asp-validation-for="Email"
+                      class="text-danger validation-message">
+                </span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group-custom">
+                <label asp-for="Password" class="form-label">
+                    Password
+                </label>
+
+                <div class="input-wrapper">
+                    <i class="bi bi-lock input-icon"></i>
+
+                    <input asp-for="Password"
+                           id="loginPassword"
+                           type="password"
+                           class="form-control-custom password-input"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" />
+
+                    <button type="button"
+                            class="password-toggle"
+                            onclick="togglePassword('loginPassword', 'loginPasswordIcon')"
+                            aria-label="Show password">
+
+                        <i id="loginPasswordIcon"
+                           class="bi bi-eye"></i>
+
+                    </button>
+                </div>
+
+                <span asp-validation-for="Password"
+                      class="text-danger validation-message">
+                </span>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="remember-row">
+
+                <div class="form-check">
+                    <input asp-for="RememberMe"
+                           class="form-check-input" />
+
+                    <label asp-for="RememberMe"
+                           class="form-check-label">
+                        Remember me
+                    </label>
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="authentication-button">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Login
+            </button>
+
+        </form>
+
+        <div class="authentication-footer">
+            <span>Don't have an account?</span>
+
+            <a asp-action="Register">
+                Create an account
+            </a>
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function togglePassword(inputId, iconId) {
+
+            const passwordInput = document.getElementById(inputId);
+            const passwordIcon = document.getElementById(iconId);
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+
+                passwordIcon.classList.remove("bi-eye");
+                passwordIcon.classList.add("bi-eye-slash");
+
+            } else {
+
+                passwordInput.type = "password";
+
+                passwordIcon.classList.remove("bi-eye-slash");
+                passwordIcon.classList.add("bi-eye");
+            }
+        }
+    </script>
+}

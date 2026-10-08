@@ -1,0 +1,178 @@
+﻿@model Tour_Module.ViewModels.Authentication.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="authentication-page">
+    <div class="authentication-card">
+
+        <div class="authentication-header">
+            <div class="authentication-icon">
+                <i class="bi bi-person-plus"></i>
+            </div>
+
+            <h2>Create Account</h2>
+
+            <p>
+                Register to get started
+            </p>
+        </div>
+
+        <form asp-action="Register" method="post">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <!-- Full Name -->
+            <div class="form-group-custom">
+                <label asp-for="FullName" class="form-label">
+                    Full Name
+                </label>
+
+                <div class="input-wrapper">
+                    <i class="bi bi-person input-icon"></i>
+
+                    <input asp-for="FullName"
+                           class="form-control-custom"
+                           placeholder="Enter your full name"
+                           autocomplete="name" />
+                </div>
+
+                <span asp-validation-for="FullName"
+                      class="text-danger validation-message">
+                </span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group-custom">
+                <label asp-for="Email" class="form-label">
+                    Email Address
+                </label>
+
+                <div class="input-wrapper">
+                    <i class="bi bi-envelope input-icon"></i>
+
+                    <input asp-for="Email"
+                           class="form-control-custom"
+                           placeholder="Enter your email"
+                           autocomplete="email" />
+                </div>
+
+                <span asp-validation-for="Email"
+                      class="text-danger validation-message">
+                </span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-group-custom">
+                <label asp-for="Password" class="form-label">
+                    Password
+                </label>
+
+                <div class="input-wrapper">
+                    <i class="bi bi-lock input-icon"></i>
+
+                    <input asp-for="Password"
+                           id="registerPassword"
+                           type="password"
+                           class="form-control-custom password-input"
+                           placeholder="Create a password"
+                           autocomplete="new-password" />
+
+                    <button type="button"
+                            class="password-toggle"
+                            onclick="togglePassword('registerPassword', 'registerPasswordIcon')"
+                            aria-label="Show password">
+
+                        <i id="registerPasswordIcon"
+                           class="bi bi-eye"></i>
+
+                    </button>
+                </div>
+
+                <span asp-validation-for="Password"
+                      class="text-danger validation-message">
+                </span>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group-custom">
+                <label asp-for="ConfirmPassword" class="form-label">
+                    Confirm Password
+                </label>
+
+                <div class="input-wrapper">
+                    <i class="bi bi-shield-lock input-icon"></i>
+
+                    <input asp-for="ConfirmPassword"
+                           id="confirmPassword"
+                           type="password"
+                           class="form-control-custom password-input"
+                           placeholder="Confirm your password"
+                           autocomplete="new-password" />
+
+                    <button type="button"
+                            class="password-toggle"
+                            onclick="togglePassword('confirmPassword', 'confirmPasswordIcon')"
+                            aria-label="Show password">
+
+                        <i id="confirmPasswordIcon"
+                           class="bi bi-eye"></i>
+
+                    </button>
+                </div>
+
+                <span asp-validation-for="ConfirmPassword"
+                      class="text-danger validation-message">
+                </span>
+            </div>
+
+            <button type="submit"
+                    class="authentication-button">
+                <i class="bi bi-person-check me-2"></i>
+                Create Account
+            </button>
+
+        </form>
+
+        <div class="authentication-footer">
+            <span>Already have an account?</span>
+
+            <a asp-action="Login">
+                Sign in
+            </a>
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function togglePassword(inputId, iconId) {
+
+            const passwordInput = document.getElementById(inputId);
+            const passwordIcon = document.getElementById(iconId);
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+
+                passwordIcon.classList.remove("bi-eye");
+                passwordIcon.classList.add("bi-eye-slash");
+
+            } else {
+
+                passwordInput.type = "password";
+
+                passwordIcon.classList.remove("bi-eye-slash");
+                passwordIcon.classList.add("bi-eye");
+            }
+        }
+    </script>
+}

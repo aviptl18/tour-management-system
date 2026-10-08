@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Tour_Module.Constants;
 using Tour_Module.Models.Entities;
 using Tour_Module.Services.Interfaces;
 using Tour_Module.ViewModels.Location;
@@ -7,7 +8,7 @@ using Tour_Module.ViewModels.Location;
 namespace Tour_Module.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = RoleConstants.Admin)]
     public class LocationsController : Controller
     {
         private readonly ILocationService _locationService;

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
+using Tour_Module.Constants;
 using Tour_Module.DTOs.Tours;
 using Tour_Module.Models.Entities;
 using Tour_Module.Services.Interfaces;
@@ -10,7 +11,7 @@ using Tour_Module.ViewModels.Admin.Tours;
 namespace Tour_Module.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = RoleConstants.Admin)]
     public class ToursController : Controller
     {
         private readonly ITourService _tourService;

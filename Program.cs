@@ -28,8 +28,8 @@ builder.Services.AddScoped<ITourRepository>(
 
 builder.Services.AddScoped<ILocationImageRepository, LocationImageRepository>();
 
-builder.Services.AddScoped<IAuthRepository>(
-    _ => new AuthRepository(
+builder.Services.AddScoped<IAuthenticationRepository>(
+    _ => new AuthenticationRepository(
         builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 builder.Services.AddScoped<IOptionRepository>(
@@ -58,7 +58,9 @@ builder.Services.AddScoped<ITourService, TourService>();
 
 builder.Services.AddScoped<ILocationImageService, LocationImageService>();
 
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
 builder.Services.AddScoped<IOptionService, OptionService>();
 
@@ -82,17 +84,24 @@ builder.Services.AddAuthentication(
     CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Auth/Login";
-        options.LogoutPath = "/Auth/Logout";
-        options.AccessDeniedPath = "/Auth/AccessDenied";
+        options.LoginPath = "/Authentication/Login";
+        options.LogoutPath = "/Authentication/Logout";
+        options.AccessDeniedPath = "/Authentication/AccessDenied";
 
         options.Cookie.Name = "TourApp.Auth";
+
         options.Cookie.HttpOnly = true;
+
         options.Cookie.SecurePolicy =
-            CookieSecurePolicy.SameAsRequest;
+            CookieSecurePolicy.Always;
+
+        options.Cookie.SameSite =
+            SameSiteMode.Lax;
 
         options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+
+        options.ExpireTimeSpan =
+            TimeSpan.FromHours(8);
     });
 
 builder.Services.AddAuthorization();

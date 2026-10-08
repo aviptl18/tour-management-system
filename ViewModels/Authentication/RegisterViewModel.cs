@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Tour_Module.DTOs.Auth
+namespace Tour_Module.ViewModels.Authentication
 {
-    public class RegisterDto
+    public class RegisterViewModel
     {
         [Required(ErrorMessage = "Full name is required")]
-        [StringLength(100)]
+        [StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters")]
         public string FullName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required")]
